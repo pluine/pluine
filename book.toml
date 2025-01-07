@@ -1,0 +1,19 @@
+[book]
+authors = ["gibbz"]
+language = "en"
+multilingual = false
+src = "book"
+title = "pluine Documentation"
+
+[rust]
+edition = "2021"
+
+[build]
+build-dir = "target/book"
+
+[output.html]
+cname = "https://pluine.github.io/pluine"
+curly-quotes = true
+edit-url-template = "https://github.com/pluine/pluine/edit/main/{path}"
+git-repository-url = "https://github.com/pluine/pluine"
+preferred-dark-theme = "navy"
