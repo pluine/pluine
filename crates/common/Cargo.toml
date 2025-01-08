@@ -13,3 +13,4 @@ version.workspace = true
 workspace = true
 
 [dependencies]
+chumsky.workspace = true
