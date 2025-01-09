@@ -1,6 +1,17 @@
 use crate::*;
 
-/// Standard calls this token <decimal 10>
+/// e | E
+struct ExponentMarker;
+
+/// Used denote exponentiation
+///
+/// EBNF: `<ExponentMarker> [<Sign>] <DecimalDigit>+`
+pub struct Suffix {
+    sign: Option<Sign>,
+    digits: NonEmptyVec<DecimalDigit>,
+}
+
+/// From the standard's <decimal 10>.
 ///
 /// EBNF: `<DecimalVariant> [<Suffix>]`
 pub struct Decimal {

@@ -1,6 +1,8 @@
+use crate::*;
+
 /// Infinities (inf) and Not a Number (nan). Renamed from the standard's <infnan>
 pub struct NonNumber {
-    positivity: Positivity,
+    sign: Sign,
     variant: NonNumberVariant,
 }
 
@@ -9,9 +11,4 @@ pub enum NonNumberVariant {
     Infinity,
     /// +nan.0 | -nan.0
     Invalid,
-}
-
-pub enum Positivity {
-    Positive,
-    Negative,
 }

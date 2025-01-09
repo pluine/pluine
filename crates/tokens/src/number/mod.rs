@@ -1,14 +1,26 @@
-mod digit;
-pub(crate) use digit::{BinaryDigit, DecimalDigit, Digit, HexadecimalDigit, OctalDigit};
+mod core;
+pub(crate) use core::Number;
 
-mod suffix;
-pub(crate) use suffix::{Sign, Suffix};
+mod prefix;
+pub(crate) use prefix::Prefix;
+
+mod complex;
+pub(crate) use complex::ComplexNumber;
+
+mod real;
+pub(crate) use real::{RealNumber, RealNumberVariant};
+
+mod non_number;
+pub(crate) use non_number::NonNumber;
+
+mod radix;
+pub(crate) use radix::Radix;
 
 mod decimal;
 pub(crate) use decimal::Decimal;
 
-mod non_number;
-pub(crate) use non_number::{NonNumber, NonNumberVariant, Positivity};
+mod digit;
+pub(crate) use digit::{BinaryDigit, DecimalDigit, HexadecimalDigit, OctalDigit};
 
-mod prefix;
-pub(crate) use prefix::Prefix;
+mod sign;
+pub(crate) use sign::Sign;

@@ -2,9 +2,18 @@ use std::marker::PhantomData;
 
 use crate::*;
 
-/// <Radix> <Exactness> | <Exactness> <Radix>
-pub struct Prefix<R: Digit> {
-    radix: Radix<R>,
+/// EBNF:
+/// ```
+/// <Radix Binary> = #b | #B
+/// <Radix Octal> = #o | #O
+/// <Radix Decimal> = <empty> | #d | #D
+/// <Radix Hexadecimal> = #x | #X`
+/// ```
+struct RadixMarker<R>(PhantomData<R>);
+
+/// <Radix R> <Exactness> | <Exactness> <Radix R>
+pub struct Prefix<R> {
+    radix: PhantomData<R>,
     exactness: Option<Exactness>,
 }
 
@@ -17,9 +26,3 @@ pub enum Exactness {
     /// <empty>
     Unknown,
 }
-
-/// Binary - EBNF `#b | #B`,
-/// Octal - EBNF `#o | #O`,
-/// Decimal - EBNF `<empty> | #d | #D`,
-/// Hexadecimal - EBNF `#x | #X`,
-pub struct Radix<R: Digit>(PhantomData<R>);

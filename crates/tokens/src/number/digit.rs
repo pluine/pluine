@@ -1,8 +1,4 @@
-use crate::private::*;
-
-pub trait Digit: Sealed {}
-
-impl_sealed_marker!(Digit, BinaryDigit, OctalDigit, DecimalDigit, HexadecimalDigit);
+use crate::*;
 
 /// type Digit2 = BinaryDigit;
 pub enum BinaryDigit {
