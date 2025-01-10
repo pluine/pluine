@@ -16,7 +16,18 @@ mod peculiar {
 pub(crate) use peculiar::PeculiarIdentifier;
 
 mod vertical {
+    use crate::*;
+
     pub struct VerticalIdentifier(String);
+    /// EBNF: `<inline hex escape>` | `<mnemonic escape>` | `<any character except '|' or '\'>`
+    pub enum SymbolElement {
+        MnemonicEscape(MnemonicEscape),
+        InlineHexEscape(InlineHexEscape),
+        Character(SymbolElementCharacter),
+    }
+
+    // TODO: any other character must still be ascii, or part a given unicode group
+    pub struct SymbolElementCharacter(char);
 }
 pub(crate) use vertical::VerticalIdentifier;
 
@@ -32,6 +43,8 @@ mod character {
     //! for the first character to have a general category of Nd, Mc, or Me."
     //!
     //! R7RS short spec - 7.1.1
+    //!
+    //! See top level crate documentation for exceptions to this formulation.
 
     pub struct IdentifierCharacter(char);
 

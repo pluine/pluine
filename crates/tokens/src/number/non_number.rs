@@ -7,8 +7,8 @@ pub struct NonNumber {
 }
 
 pub enum NonNumberVariant {
-    /// +inf.0 | -inf.0
+    /// +inf.0 | -inf.0 | +INF.0 | -INF.0
     Infinity,
-    /// +nan.0 | -nan.0
+    /// +nan.0 | -nan.0 | +NAN.0 | -NAN.0
     Invalid,
 }
