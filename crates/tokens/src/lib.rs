@@ -20,11 +20,14 @@
 //!   10>` = <uint 10> | <decimal>. But which alternative should should the tokenizer then resolve
 //!   "10" to? `<ureal>` from `<uint>` or `<ureal>` from `<decimal>`?
 
-mod number;
-pub(crate) use number::*;
-
 mod bytes;
 pub(crate) use bytes::{Byte, ByteVector};
+
+mod boolean;
+pub(crate) use boolean::Boolean;
+
+mod number;
+pub(crate) use number::*;
 
 mod string;
 pub(crate) use string::*;
