@@ -19,6 +19,27 @@
 //!   non-terminals: `<uint 10> = <digit 10>+`, `<decimal> = <uint 10> [<Suffix>]`, and then `<ureal
 //!   10>` = <uint 10> | <decimal>. But which alternative should should the tokenizer then resolve
 //!   "10" to? `<ureal>` from `<uint>` or `<ureal>` from `<decimal>`?
+//!
+//! ## Features
+//!
+//! (None are turned on by default.)
+//!
+//! ### `unicode`
+//!
+//! Adds unicode support for identifier characters. Only ASCII characters
+//! are normally supported. The performance penalty for adding this feature
+//! practically negligible. But comes instead with the cost of adding some KiB
+//! of lookup tables to the final binary size.
+//!
+//! The specification is pretty ambiguous as to how unicode should be supported.
+//! Lots of non-terminals forbid a certain set of ASCII characters, but then
+//! proceed to allow any characters part of a given Unicode general category,
+//! which may in turn include the previously forbidden character. `\` (U+005C)
+//! belonging to the Po category being one such example.
+//!
+//! Pluine implements therefore support by allowing any character in the allowed
+//! Unicode general categories, *unless* it is also an ASCII character which was
+//! previously not permitted.
 
 mod bytes;
 pub(crate) use bytes::{Byte, ByteVector};
@@ -32,11 +53,13 @@ pub(crate) use number::*;
 mod whitespace;
 pub(crate) use whitespace::*;
 
+mod delimiters;
+
 mod string;
 pub(crate) use string::*;
 
 mod identifier;
-pub(crate) use identifier::Identifier;
+pub(crate) use identifier::*;
 
 mod containers;
 pub(crate) use containers::*;

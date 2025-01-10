@@ -9,7 +9,11 @@ readme.workspace = true
 repository.workspace = true
 version.workspace = true
 
+[features]
+unicode = ["dep:unicode-general-category"]
+
 [lints]
 workspace = true
 
 [dependencies]
+unicode-general-category = { workspace = true, optional = true }
