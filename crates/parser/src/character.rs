@@ -9,15 +9,14 @@ mod character {
 }
 
 mod literal {
-    // TODO: feature flag unicode support
     /// EBNF-ish: `#\<any char>`
     pub struct CharacterLiteral(char);
 }
 pub(crate) use literal::CharacterLiteral;
 
 mod code_point {
-    // TODO: feature flag unicode support
-    /// Unicode point code character representation point.
+    /// Unicode code point character representation.
+    ///
     /// EBNF: `#\x <HexadecimalDigit>+ | #\X <HexadecimalDigit>+`
     pub struct CharacterCodePoint(char);
 }

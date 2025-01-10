@@ -14,10 +14,8 @@ mod mnemonic {
 }
 pub(crate) use mnemonic::MnemonicEscape;
 
-mod inline_hex {
-    use crate::*;
-
+mod inline_code_point {
     /// EBNF: `\ x <HexadecimalDigit>+ ;` | \ X <HexadecimalDigit>+ ;`
-    pub struct InlineHexEscape(NonEmptyVec<HexadecimalDigit>);
+    pub struct InlineCodePoint(char);
 }
-pub(crate) use inline_hex::InlineHexEscape;
+pub(crate) use inline_code_point::InlineCodePoint;

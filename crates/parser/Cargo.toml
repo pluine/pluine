@@ -10,7 +10,7 @@ repository.workspace = true
 version.workspace = true
 
 [features]
-unicode = ["dep:unicode-general-category"]
+unicode_identifiers = ["dep:unicode-general-category"]
 
 [lints]
 workspace = true

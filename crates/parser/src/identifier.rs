@@ -19,10 +19,11 @@ mod vertical {
     use crate::*;
 
     pub struct VerticalIdentifier(String);
+
     /// EBNF: `<inline hex escape>` | `<mnemonic escape>` | `<any character except '|' or '\'>`
     pub enum SymbolElement {
         MnemonicEscape(MnemonicEscape),
-        InlineHexEscape(InlineHexEscape),
+        InlineCodePoint(InlineCodePoint),
         Character(SymbolElementCharacter),
     }
 

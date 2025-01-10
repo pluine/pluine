@@ -2,4 +2,4 @@
 pub struct Byte(u8);
 
 /// EBNF: `#u8(<Byte>)`
-pub struct ByteVector(Vec<u8>);
+pub struct ByteVector(Vec<Byte>);
