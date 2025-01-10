@@ -26,6 +26,9 @@ pub(crate) use number::*;
 mod bytes;
 pub(crate) use bytes::{Byte, ByteVector};
 
+mod string;
+pub(crate) use string::*;
+
 mod identifier;
 pub(crate) use identifier::Identifier;
 
