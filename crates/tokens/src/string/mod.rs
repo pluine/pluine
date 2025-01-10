@@ -20,6 +20,3 @@ mod inline_hex_escape {
     /// EBNF: `\ x <HexadecimalDigit>+ ;`
     pub struct InlineHexEscape(NonEmptyVec<HexadecimalDigit>);
 }
-
-mod whitespace;
-pub(crate) use whitespace::*;

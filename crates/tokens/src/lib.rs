@@ -29,6 +29,9 @@ pub(crate) use boolean::Boolean;
 mod number;
 pub(crate) use number::*;
 
+mod whitespace;
+pub(crate) use whitespace::*;
+
 mod string;
 pub(crate) use string::*;
 
