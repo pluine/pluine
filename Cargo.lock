@@ -75,7 +75,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pluine-tokens"
+name = "pluine-parser"
 version = "0.1.0"
 dependencies = [
  "unicode-general-category",

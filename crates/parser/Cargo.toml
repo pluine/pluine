@@ -1,5 +1,5 @@
 [package]
-name = "pluine-tokens"
+name = "pluine-parser"
 
 authors.workspace = true
 edition.workspace = true
