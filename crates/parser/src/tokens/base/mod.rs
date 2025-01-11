@@ -1,8 +1,8 @@
 mod misc;
 pub(crate) use misc::*;
 
-mod primitives;
-pub(crate) use primitives::*;
+mod primitive;
+pub(crate) use primitive::*;
 
 mod identifier;
 pub(crate) use identifier::*;
