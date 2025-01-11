@@ -1,18 +1,19 @@
 mod character {
     use crate::*;
 
-    pub enum Character {
-        Literal(CharacterLiteral),
+    pub enum CharacterLiteral {
+        Simple(CharacterSimple),
         CodePoint(CharacterCodePoint),
         Name(CharacterName),
     }
 }
+pub(crate) use character::CharacterLiteral;
 
 mod literal {
     /// EBNF-ish: `#\<any char>`
-    pub struct CharacterLiteral(char);
+    pub struct CharacterSimple(char);
 }
-pub(crate) use literal::CharacterLiteral;
+pub(crate) use literal::CharacterSimple;
 
 mod code_point {
     /// Unicode code point character representation.

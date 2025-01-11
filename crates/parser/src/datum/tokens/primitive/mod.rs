@@ -1,6 +1,3 @@
-mod bytes;
-pub(crate) use bytes::{Byte, ByteVector};
-
 mod boolean;
 pub(crate) use boolean::Boolean;
 

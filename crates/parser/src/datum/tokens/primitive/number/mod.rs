@@ -1,5 +1,5 @@
 mod core;
-pub(crate) use core::Number;
+pub(crate) use core::{Number, NumberLiteral};
 
 mod prefix;
 pub(crate) use prefix::Prefix;

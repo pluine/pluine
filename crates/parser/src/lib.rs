@@ -4,6 +4,30 @@
 //! resulting parse tree is still high-level enough to be used by a simple formatter before being
 //! lowered into an AST by [`pluine_ast`].
 //!
+//! ## Features
+//!
+//! (None are turned on by default.)
+//!
+//! ### `unicode_identifiers`
+//!
+//! Unicode characters are supported by default in comments, string and character literals.
+//!
+//! For identifiers, however, only a subset unicode general categories are allowed in the
+//! specification. Some KiB of lookup tables need to be added to to the final binary size for this,
+//! hence the feature flag. Enabling this feature should, however, not affect parser performance
+//! by much.
+//!
+//! The specification is pretty ambiguous as to how unicode identifiers should be supported.
+//! Lots of non-terminals forbid a certain set of ASCII characters, but then
+//! proceed to allow any characters part of a given Unicode general category,
+//! which may in turn include the previously forbidden character. `\` (U+005C)
+//! belonging to the Po category being one such example.
+//!
+//! Pluine implements, therefore, unicode idedentifier support by allowing any character in the
+//! allowed Unicode general categories, *unless* it is also an ASCII character which was
+//! previously not permitted. Conversely, a character not part of the allowed unicode categories
+//! will still be permitted if it was an allowed ASCII character./!
+//!
 //! ## Token modelling
 //!
 //! Models and parses tokens from [Revised7 Scheme Standard ch. 7.1 - Formal syntax](https://standards.scheme.org/corrected-r7rs/r7rs-Z-H-9.html#TAG:__tex2page_chap_7) into Rust types. Crate declaration are in many cases more terse by applying the following principles:
@@ -23,38 +47,11 @@
 //!   non-terminals: `<uint 10> = <digit 10>+`, `<decimal> = <uint 10> [<Suffix>]`, and then `<ureal
 //!   10>` = <uint 10> | <decimal>. But which alternative should should the tokenizer then resolve
 //!   "10" to? `<ureal>` from `<uint>` or `<ureal>` from `<decimal>`?
-//!
-//! ## Features
-//!
-//! (None are turned on by default.)
-//!
-//! ### `unicode_identifiers`
-//!
-//! Unicode characters are supported by default in string and character literals.
-//!
-//! For identifiers, however, only a subset unicode general categories are allowed in the
-//! specification. Some KiB of lookup tables need to be added to to the final binary size for this,
-//! hence the feature flag. Enabling this feature should, however, not affect parser performance
-//! by much.
-//!
-//! The specification is pretty ambiguous as to how unicode identifiers should be supported.
-//! Lots of non-terminals forbid a certain set of ASCII characters, but then
-//! proceed to allow any characters part of a given Unicode general category,
-//! which may in turn include the previously forbidden character. `\` (U+005C)
-//! belonging to the Po category being one such example.
-//!
-//! Pluine implements, therefore, unicode idedentifier support by allowing any character in the
-//! allowed Unicode general categories, *unless* it is also an ASCII character which was
-//! previously not permitted. Conversely, a character not part of the allowed unicode categories
-//! will still be permitted if it was an allowed ASCII character.
 
-mod tokens {
-    mod base;
-    pub(crate) use base::*;
+mod datum;
+pub(crate) use datum::*;
 
-    mod containers;
-    pub(crate) use containers::*;
-}
-pub(crate) use tokens::*;
+mod utils;
+pub(crate) use utils::*;
 
 mod private;
