@@ -1,7 +1,7 @@
-pub enum Comment {
+pub enum Comment<'src> {
     /// EBNF-ish: `<all characters up to a line ending>`
-    Semicolon(String),
-    Nested(NestedComment),
+    Semicolon(&'src str),
+    Nested(NestedComment<'src>),
     /// The lexer won't parse inner datum, even if it is part of the formal grammar.
     /// This choice makes it a lot easier to decouple a lexer from the parser,
     /// and in turn making the tokenization step orders of magnitude simpler.
@@ -13,12 +13,12 @@ pub enum Comment {
 }
 
 /// EBNF: `#| <NestedCommentText> <NestedComment>* <NestedCommentText> |#`
-pub struct NestedComment {
-    leading_text: NestedCommentText,
-    nested_comment: Vec<NestedComment>,
-    trailing_text: NestedCommentText,
+pub struct NestedComment<'src> {
+    leading_text: NestedCommentText<'src>,
+    nested_comment: Vec<NestedComment<'src>>,
+    trailing_text: NestedCommentText<'src>,
 }
 
 /// EBNF-ish: `<all characters except CommentOpen and CommentClose>`
 /// (may be empty)
-pub struct NestedCommentText(String);
+pub struct NestedCommentText<'src>(&'src str);

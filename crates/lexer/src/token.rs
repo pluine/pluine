@@ -27,8 +27,7 @@ pub enum TokenChar {
     CommaAt,
 }
 
-/// Intertoken space can only occur on either side of a token, and not within.
-pub enum TokenStream {
+pub enum TokenAll<'a> {
     Token(Token),
-    InterToken(Atmosphere),
+    InterToken(Atmosphere<'a>),
 }

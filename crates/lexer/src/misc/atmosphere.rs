@@ -1,8 +1,8 @@
 use crate::*;
 
-pub enum Atmosphere {
+pub enum Atmosphere<'src> {
     Whitespace(Whitespace),
-    Comment(Comment),
+    Comment(Comment<'src>),
     Directive(Directive),
 }
 
