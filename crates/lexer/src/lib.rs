@@ -47,8 +47,8 @@
 //!   10>` = <uint 10> | <decimal>. But which alternative should should the tokenizer then resolve
 //!   "10" to? `<ureal>` from `<uint>` or `<ureal>` from `<decimal>`?
 
-mod core;
-pub(crate) use core::{Token, TokenChar, TokenStream};
+mod token;
+pub(crate) use token::{Token, TokenChar, TokenStream};
 
 mod comment;
 pub(crate) use comment::Comment;
