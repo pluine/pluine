@@ -48,33 +48,13 @@
 //! previously not permitted. Conversely, a character not part of the allowed unicode categories
 //! will still be permitted if it was an allowed ASCII character.
 
-mod bytes;
-pub(crate) use bytes::{Byte, ByteVector};
+mod tokens {
+    mod base;
+    pub(crate) use base::*;
 
-mod boolean;
-pub(crate) use boolean::Boolean;
-
-mod character;
-pub(crate) use character::*;
-
-mod number;
-pub(crate) use number::*;
-
-mod whitespace;
-pub(crate) use whitespace::*;
-
-mod escapes;
-pub(crate) use escapes::*;
-
-mod string;
-pub(crate) use string::*;
-
-mod identifier;
-pub(crate) use identifier::*;
-
-mod delimiters;
-
-mod containers;
-pub(crate) use containers::*;
+    mod containers;
+    pub(crate) use containers::*;
+}
+pub(crate) use tokens::*;
 
 mod private;

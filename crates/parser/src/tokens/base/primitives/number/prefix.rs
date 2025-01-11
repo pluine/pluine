@@ -1,7 +1,5 @@
 use std::marker::PhantomData;
 
-use crate::*;
-
 /// EBNF:
 /// ```
 /// <Radix Binary> = #b | #B
@@ -14,15 +12,15 @@ struct RadixMarker<R>(PhantomData<R>);
 /// <Radix R> <Exactness> | <Exactness> <Radix R>
 pub struct Prefix<R> {
     radix: PhantomData<R>,
+    // NOTE: exactness can not be made public, it can only be determined by
+    // looking at the entire number. 4/2 is for example an exact number, whilst
+    // 4.0/2 is not
     exactness: Option<Exactness>,
 }
 
-pub enum Exactness {
+enum Exactness {
     /// #i | #I
     Inexact,
     /// #e | #E
     Exact,
-    // TODO: deprecate with upstream Option<T>
-    /// <empty>
-    Unknown,
 }
