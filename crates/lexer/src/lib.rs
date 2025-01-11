@@ -51,7 +51,7 @@ mod core;
 pub(crate) use core::{Token, TokenChar, TokenStream};
 
 mod comment;
-pub(crate) use comment::*;
+pub(crate) use comment::Comment;
 
 mod identifier;
 pub(crate) use identifier::*;

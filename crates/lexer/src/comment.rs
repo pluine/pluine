@@ -1,5 +1,3 @@
-use crate::*;
-
 pub enum Comment {
     /// EBNF-ish: `<all characters up to a line ending>`
     Semicolon(String),
@@ -14,22 +12,13 @@ pub enum Comment {
     Section,
 }
 
-mod nested {
-    /// EBNF: `#|`
-    pub struct NestedCommentOpen;
-
-    /// EBNF: `|#`
-    pub struct NestedCommentClose;
-
-    /// EBNF-ish: `<all characters except CommentOpen and CommentClose>`
-    /// (may be empty)
-    pub struct CommentText(String);
-
-    /// EBNF: `<CommentOpen> <CommentText> <NestedComment>* <CommentText> <CommentClose>`
-    pub struct NestedComment {
-        leading_text: CommentText,
-        nested_comment: Vec<NestedComment>,
-        trailing_text: CommentText,
-    }
+/// EBNF: `#| <NestedCommentText> <NestedComment>* <NestedCommentText> |#`
+pub struct NestedComment {
+    leading_text: NestedCommentText,
+    nested_comment: Vec<NestedComment>,
+    trailing_text: NestedCommentText,
 }
-pub(crate) use nested::{CommentText, NestedComment, NestedCommentClose, NestedCommentOpen};
+
+/// EBNF-ish: `<all characters except CommentOpen and CommentClose>`
+/// (may be empty)
+pub struct NestedCommentText(String);
