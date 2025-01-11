@@ -7,6 +7,7 @@ mod core {
         Peculiar(PeculiarIdentifier),
     }
 }
+pub(crate) use core::Identifier;
 
 mod simple {
     // TODO: if not(unicode_identifiers):
@@ -30,12 +31,12 @@ mod simple {
     //
     // ASCII Non Letter: `! | $ | % | & | * | / | : | < | = | > | ? | @ | ^ | _ | ~ | @ | + | - | .`
     //
-    // Digit: DecimalDigit
+    // Digit: 0..9
     pub struct SimpleSubsequent(char);
 
     pub struct SimpleIdentifier(SimpleInitial, Vec<SimpleSubsequent>);
 }
-pub(crate) use simple::SimpleIdentifier;
+pub(crate) use simple::{SimpleIdentifier, SimpleInitial, SimpleSubsequent};
 
 mod vertical {
     use crate::*;
@@ -54,12 +55,22 @@ mod vertical {
 }
 pub(crate) use vertical::VerticalIdentifier;
 
-// TODO:
 mod peculiar {
-    // Invalid
-    // +i and -i and ifnan
-    pub struct PeculiarIdentifier(String);
+    use crate::*;
+    /// Invalid exceptions: +i and -i and ifnan
+    pub enum PeculiarIdentifier {
+        /// EBNF: `<Sign>`
+        SingleSign(Sign),
+        /// EBNF: `<Sign> <SignSubsequent> <Subsequent>*`
+        SignInitial(Sign, SignSubsequent, Vec<SimpleSubsequent>),
+        /// EBNF `[<Sign>] . <DotSubsequent> <Subsequent>*`
+        SignDot(Option<Sign>, DotSubsequent, Vec<SimpleSubsequent>),
+    }
 
-    pub struct SignSubsequent();
+    /// EBNF: `<SimpleInitial> | <Sign> | @`
+    pub struct SignSubsequent(char);
+
+    /// EBNF: <SignSubsequent> | .
+    pub struct DotSubsequent(char);
 }
 pub(crate) use peculiar::PeculiarIdentifier;
