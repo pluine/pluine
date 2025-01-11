@@ -1,6 +1,7 @@
 mod core {
     use crate::*;
 
+    /// Known in some contexts as "Symbol".
     pub enum Identifier {
         Simple(SimpleIdentifier),
         Vertical(VerticalIdentifier),
