@@ -3,6 +3,7 @@
 //! Converts a UTF-8 string to a [`TokenStream`].
 //! The output should still be high-level enough for a simple formatter.
 //!
+//!
 //! ## Features
 //!
 //! (None are turned on by default.)
@@ -51,6 +52,7 @@
 extern crate alloc;
 
 mod lexer;
+pub(crate) use lexer::Lexer;
 
 mod scanner;
 pub(crate) use scanner::Scanner;

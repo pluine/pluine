@@ -22,14 +22,14 @@ impl<'src> Scanner<'src> {
     /// If inner iterator is not on an UTF-8 sequence boundary. This should
     /// never happen if after matching `.next()` on an ASCII character.
     pub fn scan_until_line_ending(&mut self) -> &'src str {
-        match self.next() {
+        match self.char_iter.next() {
             Some((start, start_char)) => {
                 if LineEnding::is_line_ending(start_char) {
                     return "";
                 }
 
                 loop {
-                    match self.next() {
+                    match self.char_iter.next() {
                         Some((current_index, current_char)) => {
                             if LineEnding::is_line_ending(current_char) {
                                 return &self.src[start..current_index];
@@ -46,10 +46,10 @@ impl<'src> Scanner<'src> {
 }
 
 impl Iterator for Scanner<'_> {
-    type Item = (usize, char);
+    type Item = char;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.char_iter.next()
+        self.char_iter.next().map(|(_, char)| char)
     }
 }
 

@@ -4,16 +4,20 @@ use crate::*;
 
 /// EBNF: `" <StringElement>* "`
 #[derive(Debug, PartialEq)]
-pub struct StringLiteral(Vec<StringElement>);
+pub struct StringLiteral<'src>(pub(crate) Vec<StringElement<'src>>);
 
 #[derive(Debug, PartialEq)]
-pub enum StringElement {
+pub enum StringElement<'src> {
     InlineCodePoint(InlineCodePoint),
     NewlineEscape(LineEnding),
     MnemonicEscape(MnemonicEscape),
     StringEscape(StringEscape),
     /// Any character other than `"` and `\`
-    Other(char),
+    ///
+    /// Stores all characters as one continuous string slice until the scanner
+    /// encounters another `StringElement` variant. This should significantly
+    /// reduce the number of elements pushed into [`StringLiteral`].
+    Other(&'src str),
 }
 
 /// EBNF: `\ <IntralineWhitespace>* <LineEnding>`
@@ -26,7 +30,7 @@ pub struct StringNewlineEscape {
 #[derive(Debug, PartialEq)]
 pub enum StringEscape {
     /// EBNF: `\"`
-    Quote,
+    DoubleQuote,
     /// EBNF: `\\`
     Backslash,
     /// EBNF: `\|`

@@ -1,12 +1,12 @@
 use crate::*;
 
 #[derive(Debug, PartialEq)]
-pub enum Token {
+pub enum Token<'src> {
     Identifier(Identifier),
     Boolean(Boolean),
     Number(NumberLiteral),
     Character(CharacterLiteral),
-    String(StringLiteral),
+    String(StringLiteral<'src>),
     Other(TokenChar),
 }
 
@@ -33,5 +33,5 @@ pub enum TokenChar {
 #[derive(Debug, PartialEq)]
 pub enum TokenAll<'src> {
     InterToken(Atmosphere<'src>),
-    Token(Token),
+    Token(Token<'src>),
 }

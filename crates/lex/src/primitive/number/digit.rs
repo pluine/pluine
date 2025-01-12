@@ -91,3 +91,7 @@ pub enum HexadecimalDigit {
     /// f | F
     F,
 }
+
+impl HexadecimalDigit {
+    pub(crate) const RADIX: u32 = 16;
+}
