@@ -51,6 +51,9 @@
 #![no_std]
 extern crate alloc;
 
+mod span;
+pub(crate) use span::{Span, Spanned};
+
 mod lexer;
 pub(crate) use lexer::Lexer;
 

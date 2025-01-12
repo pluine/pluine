@@ -19,12 +19,12 @@ impl<'src> Lexer<'src> {
     // compiler, and the `tailcall` crate does not perform well for mutual recursion. Makes it also
     // hard to reason about potential origins of UTF-8 sequence boundary errors.
     pub fn tokenize_all(mut self) -> Vec<TokenAll<'src>> {
-        while let Some(char) = self.scanner.next() {
+        while let Some((start_index, char)) = self.scanner.next() {
             match char {
                 // Atmosphere Whitespace
                 ' ' | '\t' | '\r' | '\n' => continue,
                 ';' => {
-                    self.scan_semicolon_comment();
+                    self.scan_semicolon_comment(start_index);
                 }
                 '"' => {
                     // TODO:
@@ -38,7 +38,7 @@ impl<'src> Lexer<'src> {
         self.token_buffer
     }
 
-    fn scan_semicolon_comment(&mut self) {
+    fn scan_semicolon_comment(&mut self, start_index: usize) {
         let comment_str = self.scanner.scan_until_line_ending();
         let comment_token = TokenAll::InterToken(Atmosphere::Comment(Comment::Semicolon(comment_str)));
         self.token_buffer.push(comment_token);
@@ -47,19 +47,21 @@ impl<'src> Lexer<'src> {
     fn scan_string(&mut self) {
         loop {
             match self.scanner.next() {
-                Some(char) => match char {
+                Some((char_index, char)) => match char {
                     '"' => {
                         todo!()
                     }
                     '\\' => {
                         match self.scanner.next() {
-                            Some(char_nested) => {
+                            Some((char_nested_index, char_nested)) => {
                                 match char_nested {
                                     '"' => todo!(),
                                     '\\' => todo!(),
                                     '|' => todo!(),
                                     // inline hex escape
-                                    'x' | 'X' => todo!(),
+                                    'x' | 'X' => {
+                                        let inline_hex_result = self.scan_inline_hex(char_nested_index);
+                                    }
                                     // mnemonic escape
                                     'a' => todo!(),
                                     'b' => todo!(),
@@ -88,43 +90,61 @@ impl<'src> Lexer<'src> {
     }
 
     /// `\x` or `\X` have already been scanned
-    fn scan_inline_hex(&mut self) -> Result<InlineCodePoint, InlineCodePointScanError> {
+    ///
+    /// `start_index` points to the `\` in `\x<HexDigit>+`
+    fn scan_inline_hex(&mut self, start_index: usize) -> Result<InlineCodePoint, InlineCodePointScanError> {
         match self.scanner.next() {
-            Some(char) => {
+            Some((char_index, char)) => {
                 if char == InlineCodePoint::TERIMINATOR {
-                    return Err(InlineCodePointScanError::MissingDigit);
+                    let span = self.scanner.span(start_index, char_index + 1);
+                    return Err(InlineCodePointScanError::MissingDigit(span));
                 }
 
                 match char.to_digit(HexadecimalDigit::RADIX) {
                     Some(hex_value) => {
-                        let mut current_value = hex_value;
+                        let mut current_code_point = hex_value;
                         loop {
                             match self.scanner.next() {
-                                Some(next_char) => {
+                                Some((next_char_index, next_char)) => {
                                     if next_char == InlineCodePoint::TERIMINATOR {
-                                        return InlineCodePoint::from_u32(current_value);
+                                        let span = self.scanner.span(start_index, next_char_index + 1);
+                                        return InlineCodePoint::new(span, current_code_point);
                                     }
 
                                     match next_char.to_digit(HexadecimalDigit::RADIX) {
-                                        Some(next_hex) => {
-                                            current_value = current_value
-                                                .checked_mul(HexadecimalDigit::RADIX)
-                                                .ok_or(InlineCodePointScanError::OutOfBounds)?;
+                                        Some(next_code_point) => {
+                                            let Some(shifted_prev_code_point) = current_code_point.checked_mul(HexadecimalDigit::RADIX)
+                                            else {
+                                                let span = self.scanner.span(start_index, next_char_index + 1);
+                                                return Err(InlineCodePointScanError::OutOfBounds(span));
+                                            };
 
                                             // Within bounds guaranteed by `checked_mul`.
-                                            current_value += next_hex;
+                                            current_code_point = shifted_prev_code_point + next_code_point;
                                         }
-                                        None => return Err(InlineCodePointScanError::InvalidSequenceChar),
+                                        None => {
+                                            let span = self.scanner.span_char(next_char_index);
+                                            return Err(InlineCodePointScanError::InvalidSequenceChar(span));
+                                        }
                                     }
                                 }
-                                None => return Err(InlineCodePointScanError::EndOfFile),
+                                None => {
+                                    let span = self.scanner.span_to_end_of_file(start_index);
+                                    return Err(InlineCodePointScanError::EndOfFile(span));
+                                }
                             }
                         }
                     }
-                    None => Err(InlineCodePointScanError::InvalidHexDigit),
+                    None => {
+                        let span = self.scanner.span_char(char_index);
+                        Err(InlineCodePointScanError::InvalidHexDigit(span))
+                    }
                 }
             }
-            None => Err(InlineCodePointScanError::EndOfFile),
+            None => {
+                let span = self.scanner.span_to_end_of_file(start_index);
+                Err(InlineCodePointScanError::EndOfFile(span))
+            }
         }
     }
 }
@@ -177,56 +197,88 @@ mod tests {
 
         #[test]
         fn out_of_bounds_error() {
-            assert_err(InlineCodePointScanError::OutOfBounds, "FFFFFFFFF");
+            // Error span up until the character creating the out of bounds
+            assert_err!(InlineCodePointScanError::OutOfBounds, 0, 11, "FFFFFFFFF");
         }
 
         #[test]
         fn invalid_hexadecimal_digit_error() {
             // first character
-            assert_err(InlineCodePointScanError::InvalidHexDigit, "x");
+            assert_err!(InlineCodePointScanError::InvalidHexDigit, 2, 3, "x");
         }
 
         #[test]
         fn invalid_sequence_character_error() {
             // subsequent character
-            assert_err(InlineCodePointScanError::InvalidSequenceChar, "1x");
+            assert_err!(InlineCodePointScanError::InvalidSequenceChar, 3, 4, "1x");
         }
 
         #[test]
         fn invalid_codepoint_error() {
-            assert_err(InlineCodePointScanError::InvalidCodePoint, "D800");
+            assert_err!(InlineCodePointScanError::InvalidCodePoint, "D800");
         }
 
         #[test]
         fn at_least_one_digit_error() {
-            assert_err(InlineCodePointScanError::MissingDigit, ";");
+            // ; added in assert_err
+            assert_err!(InlineCodePointScanError::MissingDigit, "");
         }
 
         #[test]
         fn end_of_file_error() {
             // at first
-            let err = Lexer::new("").scan_inline_hex().unwrap_err();
-            assert_eq!(InlineCodePointScanError::EndOfFile, err);
-
+            assert_eof("");
             // after first
-            let err = Lexer::new("00").scan_inline_hex().unwrap_err();
-            assert_eq!(InlineCodePointScanError::EndOfFile, err);
+            assert_eof("00");
+
+            fn assert_eof(src: &str) {
+                // omit semicolon
+                let src = alloc::format!("\\x{}", src);
+
+                let mut lexer = Lexer::new(&src);
+                lexer.scanner.next();
+                lexer.scanner.next();
+
+                let start = 0;
+
+                let err = lexer.scan_inline_hex(start).unwrap_err();
+
+                let expected_span = Span::new(&src, start, src.len());
+                let expected_error = InlineCodePointScanError::EndOfFile(expected_span);
+                assert_eq!(expected_error, err);
+            }
         }
 
         fn assert_valid(expected_char: char, hex_str: &str) {
-            let actual_char = scan_inline_hex(hex_str).expect("invalid inline hex character").inner();
+            let hex_str = alloc::format!("\\x{};", hex_str);
+            let mut lexer = Lexer::new(&hex_str);
+            lexer.scanner.next();
+            lexer.scanner.next();
+
+            let actual_char = lexer.scan_inline_hex(0).expect("invalid inline hex character").inner();
             assert_eq!(expected_char, actual_char);
         }
 
-        fn assert_err(expected_scan_error: InlineCodePointScanError, hex_str: &str) {
-            let actual_scan_error = scan_inline_hex(hex_str).expect_err("expected invalid hex string");
-            assert_eq!(expected_scan_error, actual_scan_error);
-        }
+        macro_rules! assert_err {
+            ($err_type:tt::$err_variant:tt, $hex_str:literal) => {
+                // Add 3 because of the inserted "\x" and ";"
+                assert_err!($err_type::$err_variant, 0, $hex_str.len() + 3, $hex_str)
+            };
+            ($err_type:tt::$err_variant:tt, $start:literal, $end:expr, $hex_str:literal) => {
+                let hex_str = alloc::format!("\\x{};", $hex_str);
 
-        fn scan_inline_hex(hex_str: &str) -> Result<InlineCodePoint, InlineCodePointScanError> {
-            let hex_str = alloc::format!("{};", hex_str);
-            Lexer::new(&hex_str).scan_inline_hex()
+                let expected_error = $err_type::$err_variant($crate::Span::new(&hex_str, $start, $end));
+
+                let mut lexer = Lexer::new(&hex_str);
+                lexer.scanner.next();
+                lexer.scanner.next();
+
+                let actual_scan_error = lexer.scan_inline_hex(0).expect_err("expected invalid hex string");
+
+                assert_eq!(expected_error, actual_scan_error);
+            };
         }
+        use assert_err;
     }
 
     mod string {
@@ -329,6 +381,7 @@ mod tests {
         #[test]
         fn inline_hex_escape() {
             // both upper and lowercase
+            // assert span range and contents
             todo!()
         }
 

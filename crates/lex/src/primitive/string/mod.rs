@@ -8,7 +8,7 @@ pub struct StringLiteral<'src>(pub(crate) Vec<StringElement<'src>>);
 
 #[derive(Debug, PartialEq)]
 pub enum StringElement<'src> {
-    InlineCodePoint(InlineCodePoint),
+    InlineCodePoint(InlineCodePoint<'src>),
     NewlineEscape(LineEnding),
     MnemonicEscape(MnemonicEscape),
     StringEscape(StringEscape),

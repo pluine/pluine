@@ -53,9 +53,9 @@ mod vertical {
     pub struct VerticalIdentifier(alloc::string::String);
 
     /// EBNF: `<inline hex escape>` | `<mnemonic escape>` | `<any character except '|' or '\'>`
-    pub enum SymbolElement {
+    pub enum SymbolElement<'src> {
         MnemonicEscape(MnemonicEscape),
-        InlineCodePoint(InlineCodePoint),
+        InlineCodePoint(InlineCodePoint<'src>),
         Character(SymbolElementCharacter),
     }
 
