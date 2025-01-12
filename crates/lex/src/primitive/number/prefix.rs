@@ -1,7 +1,7 @@
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 /// EBNF:
-/// ```
+/// ```no_compile
 /// <Radix Binary> = #b | #B
 /// <Radix Octal> = #o | #O
 /// <Radix Decimal> = <empty> | #d | #D
@@ -10,6 +10,7 @@ use std::marker::PhantomData;
 struct RadixMarker<R>(PhantomData<R>);
 
 /// <Radix R> <Exactness> | <Exactness> <Radix R>
+#[derive(Debug, PartialEq)]
 pub struct Prefix<R> {
     radix: PhantomData<R>,
     // NOTE: exactness can not be made public, it can only be determined by
@@ -18,6 +19,7 @@ pub struct Prefix<R> {
     exactness: Option<Exactness>,
 }
 
+#[derive(Debug, PartialEq)]
 enum Exactness {
     /// #i | #I
     Inexact,

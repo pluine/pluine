@@ -1,6 +1,7 @@
 use crate::*;
 
 /// type Digit2 = BinaryDigit;
+#[derive(Debug, PartialEq)]
 pub enum BinaryDigit {
     /// 0
     Zero,
@@ -9,6 +10,7 @@ pub enum BinaryDigit {
 }
 
 /// type Digit8 = Octal;
+#[derive(Debug, PartialEq)]
 pub enum OctalDigit {
     /// 0
     Zero,
@@ -29,6 +31,7 @@ pub enum OctalDigit {
 }
 
 /// type Digit10 = Decimal
+#[derive(Debug, PartialEq)]
 pub enum DecimalDigit {
     /// 0
     Zero,
@@ -53,6 +56,7 @@ pub enum DecimalDigit {
 }
 
 /// type Digit16 = Hexadecimal
+#[derive(Debug, PartialEq)]
 pub enum HexadecimalDigit {
     /// 0
     Zero,

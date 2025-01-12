@@ -5,13 +5,13 @@ use text::TextParser;
 
 use crate::*;
 
-#[cfg_attr(test, derive(Debug, PartialEq))]
+#[derive(Debug, PartialEq)]
 pub enum Value {
     Atom(Atom),
     Expression(Expression),
 }
 
-#[cfg_attr(test, derive(Debug, PartialEq))]
+#[derive(Debug, PartialEq)]
 pub struct Expression {
     pub symbol: Box<str>,
     pub list: Box<[Value]>,

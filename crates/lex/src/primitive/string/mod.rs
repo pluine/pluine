@@ -1,8 +1,12 @@
+use alloc::vec::Vec;
+
 use crate::*;
 
 /// EBNF: `" <StringElement>* "`
+#[derive(Debug, PartialEq)]
 pub struct StringLiteral(Vec<StringElement>);
 
+#[derive(Debug, PartialEq)]
 pub enum StringElement {
     InlineCodePoint(InlineCodePoint),
     NewlineEscape(LineEnding),
@@ -19,6 +23,7 @@ pub struct StringNewlineEscape {
     line_ending: LineEnding,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum StringEscape {
     /// EBNF: `\"`
     Quote,

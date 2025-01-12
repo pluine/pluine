@@ -4,6 +4,7 @@ pub enum IntralineWhitespace {
     Tab,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum LineEnding {
     /// LF
     ///
@@ -19,8 +20,8 @@ pub enum LineEnding {
     ReturnNewline,
 }
 
-/// EBNF: `<IntralineWhitespace> | <LineEnding>`
-pub enum Whitespace {
-    Intraline(IntralineWhitespace),
-    Interline(LineEnding),
+impl LineEnding {
+    pub(crate) fn is_line_ending(char: char) -> bool {
+        char == '\n' || char == '\r'
+    }
 }

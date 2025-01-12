@@ -2,7 +2,7 @@ use chumsky::prelude::*;
 
 use crate::*;
 
-#[cfg_attr(test, derive(Debug, PartialEq))]
+#[derive(Debug, PartialEq)]
 pub enum Literal {
     Integer(Integer),
     String(Box<str>),

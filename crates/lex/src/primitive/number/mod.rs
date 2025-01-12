@@ -21,6 +21,3 @@ pub(crate) use decimal::Decimal;
 
 mod digit;
 pub(crate) use digit::{BinaryDigit, DecimalDigit, HexadecimalDigit, OctalDigit};
-
-mod sign;
-pub(crate) use sign::Sign;

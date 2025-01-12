@@ -2,7 +2,7 @@ use chumsky::prelude::*;
 
 use crate::*;
 
-#[cfg_attr(test, derive(Debug, PartialEq))]
+#[derive(Debug, PartialEq)]
 pub enum Integer {
     // NOTE: Bounds checks part of semantic analysis
     Signed(u64),

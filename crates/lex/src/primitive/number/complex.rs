@@ -1,5 +1,6 @@
 use crate::*;
 
+#[derive(Debug, PartialEq)]
 pub enum ComplexNumber<R: Radix> {
     /// EBNF: `<RealNumber>`
     Real(RealNumber<R>),

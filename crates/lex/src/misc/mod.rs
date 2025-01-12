@@ -1,6 +1,9 @@
 mod non_empty;
 pub(crate) use non_empty::NonEmptyVec;
 
+mod sign;
+pub(crate) use sign::Sign;
+
 mod escapes;
 pub(crate) use escapes::*;
 

@@ -2,6 +2,7 @@ mod core {
     use crate::*;
 
     /// Known in some contexts as "Symbol".
+    #[derive(Debug, PartialEq)]
     pub enum Identifier {
         Simple(SimpleIdentifier),
         Vertical(VerticalIdentifier),
@@ -11,6 +12,8 @@ mod core {
 pub(crate) use core::Identifier;
 
 mod simple {
+    use alloc::vec::Vec;
+
     // TODO: if not(unicode_identifiers):
     // ascii_initial =  |char| .is_ascii_alphabetic() || is_ascii_non_letter
     // TODO: if (unicode_identifiers):
@@ -20,6 +23,7 @@ mod simple {
     // U+200C or U+200D
     //
     //  ASCII Non letter: `! | $ | % | & | * | / | : | < | = | > | ? | @ | ^ | _ | ~`
+    #[derive(Debug, PartialEq)]
     pub struct SimpleInitial(char);
 
     // TODO: if not(unicode_identifiers):
@@ -33,8 +37,10 @@ mod simple {
     // ASCII Non Letter: `! | $ | % | & | * | / | : | < | = | > | ? | @ | ^ | _ | ~ | @ | + | - | .`
     //
     // Digit: 0..9
+    #[derive(Debug, PartialEq)]
     pub struct SimpleSubsequent(char);
 
+    #[derive(Debug, PartialEq)]
     pub struct SimpleIdentifier(SimpleInitial, Vec<SimpleSubsequent>);
 }
 pub(crate) use simple::{SimpleIdentifier, SimpleInitial, SimpleSubsequent};
@@ -42,7 +48,9 @@ pub(crate) use simple::{SimpleIdentifier, SimpleInitial, SimpleSubsequent};
 mod vertical {
     use crate::*;
 
-    pub struct VerticalIdentifier(String);
+    // TODO: use &str
+    #[derive(Debug, PartialEq)]
+    pub struct VerticalIdentifier(alloc::string::String);
 
     /// EBNF: `<inline hex escape>` | `<mnemonic escape>` | `<any character except '|' or '\'>`
     pub enum SymbolElement {
@@ -57,8 +65,12 @@ mod vertical {
 pub(crate) use vertical::VerticalIdentifier;
 
 mod peculiar {
+    use alloc::vec::Vec;
+
     use crate::*;
+
     /// Invalid exceptions: +i and -i and ifnan
+    #[derive(Debug, PartialEq)]
     pub enum PeculiarIdentifier {
         /// EBNF: `<Sign>`
         SingleSign(Sign),
@@ -69,9 +81,11 @@ mod peculiar {
     }
 
     /// EBNF: `<SimpleInitial> | <Sign> | @`
+    #[derive(Debug, PartialEq)]
     pub struct SignSubsequent(char);
 
     /// EBNF: <SignSubsequent> | .
+    #[derive(Debug, PartialEq)]
     pub struct DotSubsequent(char);
 }
 pub(crate) use peculiar::PeculiarIdentifier;

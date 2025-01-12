@@ -1,13 +1,16 @@
 use crate::*;
 
+#[derive(Debug, PartialEq)]
 pub enum Token {
     Identifier(Identifier),
     Boolean(Boolean),
     Number(NumberLiteral),
     Character(CharacterLiteral),
     String(StringLiteral),
+    Other(TokenChar),
 }
 
+#[derive(Debug, PartialEq)]
 pub enum TokenChar {
     /// `(`
     OpenParenthesis,
@@ -27,7 +30,8 @@ pub enum TokenChar {
     CommaAt,
 }
 
-pub enum TokenAll<'a> {
+#[derive(Debug, PartialEq)]
+pub enum TokenAll<'src> {
+    InterToken(Atmosphere<'src>),
     Token(Token),
-    InterToken(Atmosphere<'a>),
 }

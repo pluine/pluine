@@ -1,10 +1,12 @@
 use crate::*;
 
+#[derive(Debug, PartialEq)]
 pub enum RealNumber<R: Radix> {
     Number { sign: Option<Sign>, variant: RealNumberVariant<R> },
     NonNumber(NonNumber),
 }
 
+#[derive(Debug, PartialEq)]
 pub enum RealNumberVariant<R: Radix> {
     /// Simple fraction representation
     ///

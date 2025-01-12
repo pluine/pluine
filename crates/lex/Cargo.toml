@@ -1,5 +1,5 @@
 [package]
-name = "pluine_lexer"
+name = "pluine_lex"
 
 authors.workspace = true
 edition.workspace = true

@@ -1,8 +1,8 @@
 use crate::*;
 
-pub trait Radix: private::Sealed {
+pub trait Radix: core::fmt::Debug + PartialEq + private::Sealed {
     /// Radix specific number representation in [`RealNumberVariant::Number`]
-    type Number;
+    type Number: core::fmt::Debug + PartialEq;
 }
 
 private::impl_sealed_marker!(Radix, BinaryDigit, OctalDigit, DecimalDigit, HexadecimalDigit);

@@ -1,4 +1,5 @@
 mod mnemonic {
+    #[derive(Debug, PartialEq)]
     pub enum MnemonicEscape {
         /// EPNF: `\a`
         Alarm,
@@ -16,6 +17,7 @@ pub(crate) use mnemonic::MnemonicEscape;
 
 mod inline_code_point {
     /// EBNF: `\ x <HexadecimalDigit>+ ;` | \ X <HexadecimalDigit>+ ;`
+    #[derive(Debug, PartialEq)]
     pub struct InlineCodePoint(char);
 }
 pub(crate) use inline_code_point::InlineCodePoint;

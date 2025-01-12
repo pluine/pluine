@@ -3,7 +3,7 @@ use chumsky::prelude::*;
 use crate::*;
 
 // IMPROVEMENT: merge with literal?
-#[cfg_attr(test, derive(Debug, PartialEq))]
+#[derive(Debug, PartialEq)]
 pub enum Atom {
     Literal(Literal),
     // TODO:
