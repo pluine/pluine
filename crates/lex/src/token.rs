@@ -4,7 +4,7 @@ use crate::*;
 pub enum Token<'src> {
     Identifier(Identifier<'src>),
     Boolean(Boolean<'src>),
-    Number(NumberLiteral),
+    Number(NumberLiteral<'src>),
     Character(CharacterLiteral),
     String(StringLiteral<'src>),
     Other(TokenChar),
