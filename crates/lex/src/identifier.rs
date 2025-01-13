@@ -4,17 +4,17 @@ mod core {
     /// Known in some contexts as "Symbol".
     #[derive(Debug, PartialEq)]
     pub enum Identifier<'src> {
-        Simple(SimpleIdentifier, Span<'src>),
-        Vertical(VerticalIdentifier, Span<'src>),
-        Peculiar(PeculiarIdentifier, Span<'src>),
+        Simple(SimpleIdentifier<'src>),
+        Vertical(VerticalIdentifier<'src>),
+        Peculiar(PeculiarIdentifier<'src>),
     }
 
     impl Spanned for Identifier<'_> {
         fn span(&self) -> Span<'_> {
-            *match self {
-                Identifier::Simple(_, span) => span,
-                Identifier::Vertical(_, span) => span,
-                Identifier::Peculiar(_, span) => span,
+            match self {
+                Identifier::Simple(identifier) => identifier.span(),
+                Identifier::Vertical(identifier) => identifier.span(),
+                Identifier::Peculiar(identifier) => identifier.span(),
             }
         }
     }
@@ -22,7 +22,7 @@ mod core {
 pub(crate) use core::Identifier;
 
 mod simple {
-    use alloc::vec::Vec;
+    use crate::*;
 
     // TODO: if not(unicode_identifiers):
     // ascii_initial =  |char| .is_ascii_alphabetic() || is_ascii_non_letter
@@ -50,44 +50,70 @@ mod simple {
     #[derive(Debug, PartialEq)]
     pub struct SimpleSubsequent(char);
 
+    /// EBNF: `<SimpleInitial> <SimpleSubsequent>*`
     #[derive(Debug, PartialEq)]
-    pub struct SimpleIdentifier(SimpleInitial, Vec<SimpleSubsequent>);
+    pub struct SimpleIdentifier<'src> {
+        inner: &'src str,
+        span: Span<'src>,
+    }
+
+    impl Spanned for SimpleIdentifier<'_> {
+        fn span(&self) -> Span<'_> {
+            self.span
+        }
+    }
 }
 pub(crate) use simple::{SimpleIdentifier, SimpleInitial, SimpleSubsequent};
 
 mod vertical {
+    use alloc::vec::Vec;
+
     use crate::*;
 
-    // TODO: use &str
     #[derive(Debug, PartialEq)]
-    pub struct VerticalIdentifier(alloc::string::String);
+    pub struct VerticalIdentifier<'src> {
+        inner: Vec<SymbolElement<'src>>,
+        span: Span<'src>,
+    }
+
+    impl Spanned for VerticalIdentifier<'_> {
+        fn span(&self) -> Span<'_> {
+            self.span
+        }
+    }
 
     /// EBNF: `<inline hex escape>` | `<mnemonic escape>` | `<any character except '|' or '\'>`
+    // TODO: any other character must still be valid ascii, or part a allowed unicode group, `SimpleSubsequent`
+    #[derive(Debug, PartialEq)]
     pub enum SymbolElement<'src> {
         MnemonicEscape(MnemonicEscape),
         InlineCodePoint(InlineCodePoint<'src>),
-        Character(SymbolElementCharacter),
+        Str(&'src str),
     }
 
-    // TODO: any other character must still be ascii, or part a given unicode group
     pub struct SymbolElementCharacter(char);
 }
 pub(crate) use vertical::VerticalIdentifier;
 
 mod peculiar {
-    use alloc::vec::Vec;
-
     use crate::*;
 
     /// Invalid exceptions: +i and -i and ifnan
+    /// EBNF: `<Sign>`
+    /// EBNF: `<Sign> <SignSubsequent> <Subsequent>*`
+    /// EBNF `[<Sign>] . <DotSubsequent> <Subsequent>*`
     #[derive(Debug, PartialEq)]
-    pub enum PeculiarIdentifier {
-        /// EBNF: `<Sign>`
-        SingleSign(Sign),
-        /// EBNF: `<Sign> <SignSubsequent> <Subsequent>*`
-        SignInitial(Sign, SignSubsequent, Vec<SimpleSubsequent>),
-        /// EBNF `[<Sign>] . <DotSubsequent> <Subsequent>*`
-        SignDot(Option<Sign>, DotSubsequent, Vec<SimpleSubsequent>),
+    pub struct PeculiarIdentifier<'src> {
+        /// Span can't be reused trivially for str
+        /// as it includes surrounding quotes
+        inner: &'src str,
+        span: Span<'src>,
+    }
+
+    impl Spanned for PeculiarIdentifier<'_> {
+        fn span(&self) -> Span<'_> {
+            self.span
+        }
     }
 
     /// EBNF: `<SimpleInitial> | <Sign> | @`
