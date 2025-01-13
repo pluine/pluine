@@ -50,34 +50,9 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
 }
 
 fn derive_struct(data_struct: syn::DataStruct) -> syn::Result<proc_macro2::TokenStream> {
-    const SPAN_ATTRIBUTE_NAME: &str = "span";
-
-    // TODO: refactor by merging match arms
-    match data_struct.fields {
+    return match data_struct.fields {
         Fields::Named(ref fields_named) => {
-            let mut span_field_iter = fields_named.named.iter().filter_map(|field| {
-                field
-                    .attrs
-                    .clone()
-                    .iter()
-                    .find(|attribute| match &attribute.meta {
-                        syn::Meta::Path(path) => path.is_ident(SPAN_ATTRIBUTE_NAME),
-                        _ => false,
-                    })
-                    .map(|_| field)
-            });
-
-            let Some(span_field) = span_field_iter.next() else {
-                return Err(syn::Error::new(data_struct.fields.span(), "missing field annotated with #[span]"));
-            };
-
-            if let Some(_another_span_field) = span_field_iter.next() {
-                return Err(syn::Error::new(
-                    data_struct.fields.span(),
-                    "expected only one #[span] field attribute, unable to infer which one to use.",
-                ));
-            }
-
+            let (_, span_field) = find_span_field(&data_struct, fields_named.named.iter())?;
             let span_field_ident = &span_field.ident;
 
             Ok(quote! { self.#span_field_ident })
@@ -92,30 +67,8 @@ fn derive_struct(data_struct: syn::DataStruct) -> syn::Result<proc_macro2::Token
                 }
                 1 => 0,
                 _ => {
-                    let mut span_field_iter = fields_unnamed.unnamed.iter().enumerate().filter_map(|(index, field)| {
-                        field
-                            .attrs
-                            .clone()
-                            .iter()
-                            .find(|attribute| match &attribute.meta {
-                                syn::Meta::Path(path) => path.is_ident(SPAN_ATTRIBUTE_NAME),
-                                _ => false,
-                            })
-                            .map(|_| index)
-                    });
-
-                    let Some(span_field) = span_field_iter.next() else {
-                        return Err(syn::Error::new(data_struct.fields.span(), "missing field annotated with #[span]"));
-                    };
-
-                    if let Some(_another_span_field) = span_field_iter.next() {
-                        return Err(syn::Error::new(
-                            data_struct.fields.span(),
-                            "expected only one #[span] field attribute, unable to infer which one to use.",
-                        ));
-                    }
-
-                    span_field
+                    let (span_field_index, _) = find_span_field(&data_struct, fields_unnamed.unnamed.iter())?;
+                    span_field_index
                 }
             };
 
@@ -127,6 +80,38 @@ fn derive_struct(data_struct: syn::DataStruct) -> syn::Result<proc_macro2::Token
             data_struct.struct_token.span,
             "unit structs are not supported as they contain no span",
         )),
+    };
+
+    fn find_span_field<'a>(
+        data_struct: &'a syn::DataStruct,
+        field_iter: impl Iterator<Item = &'a syn::Field>,
+    ) -> syn::Result<(usize, &'a syn::Field)> {
+        const SPAN_ATTRIBUTE_NAME: &str = "span";
+
+        let mut span_field_iter = field_iter.enumerate().filter_map(|(index, field)| {
+            field
+                .attrs
+                .clone()
+                .iter()
+                .find(|attribute| match &attribute.meta {
+                    syn::Meta::Path(path) => path.is_ident(SPAN_ATTRIBUTE_NAME),
+                    _ => false,
+                })
+                .map(|_| (index, field))
+        });
+
+        let Some(span_field) = span_field_iter.next() else {
+            return Err(syn::Error::new(data_struct.fields.span(), "missing field annotated with #[span]"));
+        };
+
+        if let Some(_another_span_field) = span_field_iter.next() {
+            return Err(syn::Error::new(
+                data_struct.fields.span(),
+                "expected only one #[span] field attribute, unable to infer which one to use.",
+            ));
+        }
+
+        Ok(span_field)
     }
 }
 
