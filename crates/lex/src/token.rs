@@ -5,7 +5,7 @@ pub enum Token<'src> {
     Identifier(Identifier<'src>),
     Boolean(Boolean<'src>),
     Number(NumberLiteral<'src>),
-    Character(CharacterLiteral),
+    Character(CharacterLiteral<'src>),
     String(StringLiteral<'src>),
     Other(TokenChar),
 }
