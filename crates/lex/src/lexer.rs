@@ -285,13 +285,20 @@ mod tests {
     mod string {
         use super::*;
 
+        fn expected_string_token<'src>(src: &'src str, start: usize, end: usize, element: StringElement<'src>) -> TokenAll<'src> {
+            TokenAll::Token(Token::String(StringLiteral {
+                inner: alloc::vec![element],
+                span: Span::new(src, start, end),
+            }))
+        }
+
         #[test]
         fn valid_scan() {
             let src = "\"abc\"";
             let tokens = Lexer::new(src).tokenize_all();
 
             let comment = &tokens[0];
-            let expected = TokenAll::Token(Token::String(StringLiteral(alloc::vec![StringElement::Other("abc")])));
+            let expected = expected_string_token(src, 0, 5, StringElement::Other("abc"));
             assert_eq!(&expected, comment);
         }
 
@@ -301,9 +308,7 @@ mod tests {
             let tokens = Lexer::new(src).tokenize_all();
 
             let comment = &tokens[0];
-            let expected = TokenAll::Token(Token::String(StringLiteral(alloc::vec![StringElement::StringEscape(
-                StringEscape::Backslash
-            )])));
+            let expected = expected_string_token(src, 0, 3, StringElement::StringEscape(StringEscape::Backslash));
             assert_eq!(&expected, comment);
         }
 
@@ -313,9 +318,7 @@ mod tests {
             let tokens = Lexer::new(src).tokenize_all();
 
             let comment = &tokens[0];
-            let expected = TokenAll::Token(Token::String(StringLiteral(alloc::vec![StringElement::StringEscape(
-                StringEscape::VerticalLine
-            )])));
+            let expected = expected_string_token(src, 0, 3, StringElement::StringEscape(StringEscape::VerticalLine));
             assert_eq!(&expected, comment);
         }
 
@@ -325,9 +328,7 @@ mod tests {
             let tokens = Lexer::new(src).tokenize_all();
 
             let comment = &tokens[0];
-            let expected = TokenAll::Token(Token::String(StringLiteral(alloc::vec![StringElement::StringEscape(
-                StringEscape::DoubleQuote
-            )])));
+            let expected = expected_string_token(src, 0, 3, StringElement::StringEscape(StringEscape::DoubleQuote));
             assert_eq!(&expected, comment);
         }
 
@@ -337,45 +338,35 @@ mod tests {
             let tokens = Lexer::new(src).tokenize_all();
 
             let comment = &tokens[0];
-            let expected = TokenAll::Token(Token::String(StringLiteral(alloc::vec![StringElement::MnemonicEscape(
-                MnemonicEscape::Alarm
-            )])));
+            let expected = expected_string_token(src, 0, 4, StringElement::MnemonicEscape(MnemonicEscape::Alarm));
             assert_eq!(&expected, comment);
 
             let src = "\"\\b\"";
             let tokens = Lexer::new(src).tokenize_all();
 
             let comment = &tokens[0];
-            let expected = TokenAll::Token(Token::String(StringLiteral(alloc::vec![StringElement::MnemonicEscape(
-                MnemonicEscape::Backspace
-            )])));
+            let expected = expected_string_token(src, 0, 4, StringElement::MnemonicEscape(MnemonicEscape::Backspace));
             assert_eq!(&expected, comment);
 
             let src = "\"\\n\"";
             let tokens = Lexer::new(src).tokenize_all();
 
             let comment = &tokens[0];
-            let expected = TokenAll::Token(Token::String(StringLiteral(alloc::vec![StringElement::MnemonicEscape(
-                MnemonicEscape::Newline
-            )])));
+            let expected = expected_string_token(src, 0, 4, StringElement::MnemonicEscape(MnemonicEscape::Newline));
             assert_eq!(&expected, comment);
 
             let src = "\"\\r\"";
             let tokens = Lexer::new(src).tokenize_all();
 
             let comment = &tokens[0];
-            let expected = TokenAll::Token(Token::String(StringLiteral(alloc::vec![StringElement::MnemonicEscape(
-                MnemonicEscape::Return
-            )])));
+            let expected = expected_string_token(src, 0, 4, StringElement::MnemonicEscape(MnemonicEscape::Return));
             assert_eq!(&expected, comment);
 
             let src = "\"\\t\"";
             let tokens = Lexer::new(src).tokenize_all();
 
             let comment = &tokens[0];
-            let expected = TokenAll::Token(Token::String(StringLiteral(alloc::vec![StringElement::MnemonicEscape(
-                MnemonicEscape::Tab
-            )])));
+            let expected = expected_string_token(src, 0, 4, StringElement::MnemonicEscape(MnemonicEscape::Tab));
             assert_eq!(&expected, comment);
         }
 

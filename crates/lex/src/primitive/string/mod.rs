@@ -4,7 +4,16 @@ use crate::*;
 
 /// EBNF: `" <StringElement>* "`
 #[derive(Debug, PartialEq)]
-pub struct StringLiteral<'src>(pub(crate) Vec<StringElement<'src>>);
+pub struct StringLiteral<'src> {
+    pub(crate) inner: Vec<StringElement<'src>>,
+    pub(crate) span: Span<'src>,
+}
+
+impl Spanned for StringLiteral<'_> {
+    fn span(&self) -> Span<'_> {
+        self.span
+    }
+}
 
 #[derive(Debug, PartialEq)]
 pub enum StringElement<'src> {
