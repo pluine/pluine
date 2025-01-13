@@ -1,19 +1,20 @@
 [package]
-name = "pluine-lex"
+name = "pluine-lex-macros"
 
 authors.workspace = true
 edition.workspace = true
 exclude.workspace = true
 license.workspace = true
-readme.workspace = true
 repository.workspace = true
 version.workspace = true
 
-[dependencies]
-pluine-lex-macros.workspace = true
+[lib]
+proc-macro = true
 
 [lints]
 workspace = true
 
-[dev-dependencies]
-trybuild = "1.0"
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = "2"

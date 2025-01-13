@@ -1,0 +1,5 @@
+error: unit structs are not supported as they contain no span
+ --> tests/ui/not_supported_unit_enums.rs
+  |
+  |     A,
+  |     ^

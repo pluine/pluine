@@ -1,0 +1,11 @@
+error: expected only one #[span] field attribute, unable to infer which one to use.
+ --> tests/ui/duplicate_span_attribute_named_struct.rs
+  |
+  |   struct Foo<'src> {
+  |  __________________^
+  | |     #[span]
+  | |     a: Span<'src>,
+  | |     #[span]
+  | |     b: Span<'src>,
+  | | }
+  | |_^

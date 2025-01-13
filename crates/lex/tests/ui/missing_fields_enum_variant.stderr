@@ -1,0 +1,5 @@
+error: no unnamed field found in enum variant which may implement `Span`
+ --> tests/ui/missing_fields_enum_variant.rs
+  |
+  |     A(),
+  |      ^^

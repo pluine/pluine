@@ -51,7 +51,8 @@
 #![no_std]
 extern crate alloc;
 
-mod span;
+pub mod span;
+pub(crate) use pluine_lex_macros::Spanned;
 pub(crate) use span::{Span, Spanned};
 
 mod lexer;

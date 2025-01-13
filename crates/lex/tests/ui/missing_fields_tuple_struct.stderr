@@ -1,0 +1,5 @@
+error: no tuple fields supplied, at least one required
+ --> tests/ui/missing_fields_tuple_struct.rs
+  |
+  | struct Foo();
+  |           ^^
