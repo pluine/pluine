@@ -3,7 +3,7 @@ use crate::*;
 #[derive(Debug, PartialEq)]
 pub enum Token<'src> {
     Identifier(Identifier<'src>),
-    Boolean(Boolean),
+    Boolean(Boolean<'src>),
     Number(NumberLiteral),
     Character(CharacterLiteral),
     String(StringLiteral<'src>),
