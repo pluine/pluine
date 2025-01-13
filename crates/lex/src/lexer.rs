@@ -15,6 +15,7 @@ impl<'src> Lexer<'src> {
     /// A result is returned because tokens are validated to some degree. No
     /// error recovery is applied. Meaning, no tokenization is performed on the remaining source
     /// string once an invalid token is encountered.
+    //
     // NOTE: Avoid using recursion here. Tail call optimization can't be guaranteed by the rust
     // compiler, and the `tailcall` crate does not perform well for mutual recursion. Makes it also
     // hard to reason about potential origins of UTF-8 sequence boundary errors.

@@ -3,10 +3,20 @@ mod core {
 
     /// Known in some contexts as "Symbol".
     #[derive(Debug, PartialEq)]
-    pub enum Identifier {
-        Simple(SimpleIdentifier),
-        Vertical(VerticalIdentifier),
-        Peculiar(PeculiarIdentifier),
+    pub enum Identifier<'src> {
+        Simple(SimpleIdentifier, Span<'src>),
+        Vertical(VerticalIdentifier, Span<'src>),
+        Peculiar(PeculiarIdentifier, Span<'src>),
+    }
+
+    impl Spanned for Identifier<'_> {
+        fn span(&self) -> Span<'_> {
+            *match self {
+                Identifier::Simple(_, span) => span,
+                Identifier::Vertical(_, span) => span,
+                Identifier::Peculiar(_, span) => span,
+            }
+        }
     }
 }
 pub(crate) use core::Identifier;

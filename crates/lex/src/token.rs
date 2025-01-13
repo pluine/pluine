@@ -2,7 +2,7 @@ use crate::*;
 
 #[derive(Debug, PartialEq)]
 pub enum Token<'src> {
-    Identifier(Identifier),
+    Identifier(Identifier<'src>),
     Boolean(Boolean),
     Number(NumberLiteral),
     Character(CharacterLiteral),
