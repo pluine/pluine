@@ -48,9 +48,15 @@ impl<'src> Lexer<'src> {
         Ok(self.token_buffer)
     }
 
+    /// `;` has already been scanned
     fn scan_semicolon_comment(&mut self, start_index: usize) {
-        let comment_str = self.scanner.scan_until_line_ending();
-        let comment_token = TokenAll::InterToken(Atmosphere::Comment(Comment::Semicolon(comment_str)));
+        let (end_index, comment_str) = self.scanner.scan_until_line_ending();
+
+        let span = self.scanner.span(start_index, end_index);
+
+        let semicolon_comment = SemicolonComment { inner: comment_str, span };
+        let comment_token = TokenAll::InterToken(Atmosphere::Comment(Comment::Semicolon(semicolon_comment)));
+
         self.token_buffer.push(comment_token);
     }
 
@@ -176,7 +182,11 @@ mod tests {
         let tokens = Lexer::new(src).tokenize_all().unwrap();
 
         let comment = &tokens[0];
-        let expected = TokenAll::InterToken(Atmosphere::Comment(Comment::Semicolon("\t")));
+        let expected = TokenAll::InterToken(Atmosphere::Comment(Comment::Semicolon(SemicolonComment {
+            inner: "\t",
+            span: Span::new(src, 1, 3),
+        })));
+
         assert_eq!(&expected, comment);
     }
 

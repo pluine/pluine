@@ -67,7 +67,7 @@ mod error;
 pub(crate) use error::TokenizeError;
 
 mod comment;
-pub(crate) use comment::Comment;
+pub(crate) use comment::{Comment, NestedComment, SemicolonComment};
 
 mod identifier;
 pub(crate) use identifier::*;

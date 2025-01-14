@@ -26,7 +26,7 @@ impl<'src> Scanner<'src> {
     }
 
     /// See [`Span::new`]
-    pub fn span(&self, start: usize, end: usize) -> Span<'_> {
+    pub fn span(&self, start: usize, end: usize) -> Span<'src> {
         Span::new(self.src, start, end)
     }
 
@@ -40,35 +40,38 @@ impl<'src> Scanner<'src> {
         Span::new(self.src, start, start + 1)
     }
 
-    /// Forwards the internal iterator until it reaches a [`LineEnding`]
+    /// Forwards the internal iterator until it reaches a [`LineEnding`] or EOF.
     ///
-    /// Returned string does not include the line ending.
-    /// Returns an empty string if internal iterator is at EOF.
+    /// Returned tuple includes the index for the line ending or EOF, and the
+    /// traversed string, line_ending character(s) excluded.
     ///
     /// # Panics
     ///
     /// If inner iterator is not on an UTF-8 sequence boundary. This should
     /// never happen if after matching `.next()` on an ASCII character.
-    pub fn scan_until_line_ending(&mut self) -> &'src str {
+    pub fn scan_until_line_ending(&mut self) -> (usize, &'src str) {
         match self.next() {
             Some((start, start_char)) => {
                 if LineEnding::is_line_ending(start_char) {
-                    return "";
+                    return (start, "");
                 }
 
                 loop {
                     match self.next() {
                         Some((current_index, current_char)) => {
                             if LineEnding::is_line_ending(current_char) {
-                                return &self.src[start..current_index];
+                                return (current_index, &self.src[start..current_index]);
                             }
                         }
                         // Reached EOF
-                        None => return &self.src[start..self.char_iter.offset()],
+                        None => {
+                            let eof_index = self.char_iter.offset();
+                            return (eof_index, &self.src[start..eof_index]);
+                        }
                     }
                 }
             }
-            None => "",
+            None => (self.char_iter.offset(), ""),
         }
     }
 }
@@ -84,16 +87,14 @@ mod tests {
         fn finds_return() {
             let mut scanner = Scanner::new("abc\n123");
 
-            let scanned = scanner.scan_until_line_ending();
-            assert_eq!("abc", scanned);
+            assert_scan_until_line_ending(&mut scanner, 3, "abc");
         }
 
         #[test]
         fn finds_line_feed() {
             let mut scanner = Scanner::new("abc\r123");
 
-            let scanned = scanner.scan_until_line_ending();
-            assert_eq!("abc", scanned);
+            assert_scan_until_line_ending(&mut scanner, 3, "abc");
         }
 
         #[test]
@@ -101,16 +102,21 @@ mod tests {
             let mut scanner = Scanner::new("a");
             scanner.next();
 
-            let scanned = scanner.scan_until_line_ending();
-            assert_eq!("", scanned);
+            assert_scan_until_line_ending(&mut scanner, 1, "");
         }
 
         #[test]
         fn no_newline_returns_remaining() {
             let mut scanner = Scanner::new("123");
 
-            let scanned = scanner.scan_until_line_ending();
-            assert_eq!("123", scanned);
+            assert_scan_until_line_ending(&mut scanner, 3, "123");
+        }
+
+        fn assert_scan_until_line_ending(scanner: &mut Scanner, expected_end: usize, expected_str: &str) {
+            let (actual_end, actual_str) = scanner.scan_until_line_ending();
+
+            assert_eq!(expected_str, actual_str);
+            assert_eq!(expected_end, actual_end);
         }
     }
 }

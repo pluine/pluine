@@ -7,11 +7,18 @@ pub enum Token<'src> {
     Number(NumberLiteral<'src>),
     Character(CharacterLiteral<'src>),
     String(StringLiteral<'src>),
-    Other(TokenChar),
+    Other(TokenChar<'src>),
+}
+
+#[derive(Debug, PartialEq, Spanned)]
+pub struct TokenChar<'src> {
+    inner: TokenCharVariant,
+    #[span]
+    span: Span<'src>,
 }
 
 #[derive(Debug, PartialEq)]
-pub enum TokenChar {
+pub enum TokenCharVariant {
     /// `(`
     OpenParenthesis,
     /// `)`
