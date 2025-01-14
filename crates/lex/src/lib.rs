@@ -3,8 +3,7 @@
 //! Converts a UTF-8 string to a [`TokenStream`].
 //! The output should still be high-level enough for a simple formatter.
 //!
-//!
-//! ## Features
+//!//! ## Features
 //!
 //! (None are turned on by default.)
 //!
@@ -63,6 +62,25 @@ pub(crate) use scanner::Scanner;
 
 mod token;
 pub(crate) use token::{Token, TokenAll, TokenChar};
+
+mod error {
+    use crate::*;
+
+    /// Error returned by [`Lexer::tokenize_all`]
+    // NOTE: thiserror currently not being used because it requires inner errors
+    // to be `dyn Error + 'static`. No `'src` lifetime allowed that is.
+    #[derive(Debug)]
+    pub enum TokenizeError<'src> {
+        String(TokenizeStringError<'src>),
+    }
+
+    #[derive(Debug)]
+    pub enum TokenizeStringError<'src> {
+        /// invalid inline code point (inline hex escape)
+        InlineHex(InlineCodePointScanError<'src>),
+    }
+}
+pub(crate) use error::TokenizeError;
 
 mod comment;
 pub(crate) use comment::Comment;

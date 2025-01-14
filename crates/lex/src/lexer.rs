@@ -19,7 +19,7 @@ impl<'src> Lexer<'src> {
     // NOTE: Avoid using recursion here. Tail call optimization can't be guaranteed by the rust
     // compiler, and the `tailcall` crate does not perform well for mutual recursion. Makes it also
     // hard to reason about potential origins of UTF-8 sequence boundary errors.
-    pub fn tokenize_all(mut self) -> Vec<TokenAll<'src>> {
+    pub fn tokenize_all(mut self) -> Result<Vec<TokenAll<'src>>, TokenizeError<'src>> {
         while let Some((start_index, char)) = self.scanner.next() {
             match char {
                 // Atmosphere Whitespace
@@ -36,7 +36,7 @@ impl<'src> Lexer<'src> {
             }
         }
 
-        self.token_buffer
+        Ok(self.token_buffer)
     }
 
     fn scan_semicolon_comment(&mut self, start_index: usize) {
@@ -157,14 +157,14 @@ mod tests {
     #[test]
     fn skip_atmosphere_whitespace() {
         let src = " \t\n\r";
-        let tokens = Lexer::new(src).tokenize_all();
+        let tokens = Lexer::new(src).tokenize_all().unwrap();
         assert!(tokens.is_empty())
     }
 
     #[test]
     fn semicolon_comment() {
         let src = " ;\t\n ";
-        let tokens = Lexer::new(src).tokenize_all();
+        let tokens = Lexer::new(src).tokenize_all().unwrap();
 
         let comment = &tokens[0];
         let expected = TokenAll::InterToken(Atmosphere::Comment(Comment::Semicolon("\t")));
@@ -295,7 +295,7 @@ mod tests {
         #[test]
         fn valid_scan() {
             let src = "\"abc\"";
-            let tokens = Lexer::new(src).tokenize_all();
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
             let expected = expected_string_token(src, 0, 5, StringElement::Other("abc"));
@@ -305,7 +305,7 @@ mod tests {
         #[test]
         fn backslash_escape() {
             let src = "\"\\\"";
-            let tokens = Lexer::new(src).tokenize_all();
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
             let expected = expected_string_token(src, 0, 3, StringElement::StringEscape(StringEscape::Backslash));
@@ -315,7 +315,7 @@ mod tests {
         #[test]
         fn vertical_line_escape() {
             let src = "\"|\"";
-            let tokens = Lexer::new(src).tokenize_all();
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
             let expected = expected_string_token(src, 0, 3, StringElement::StringEscape(StringEscape::VerticalLine));
@@ -325,7 +325,7 @@ mod tests {
         #[test]
         fn double_quote_escape() {
             let src = "\"\"\"";
-            let tokens = Lexer::new(src).tokenize_all();
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
             let expected = expected_string_token(src, 0, 3, StringElement::StringEscape(StringEscape::DoubleQuote));
@@ -335,35 +335,35 @@ mod tests {
         #[test]
         fn mnemonic_escape() {
             let src = "\"\\a\"";
-            let tokens = Lexer::new(src).tokenize_all();
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
             let expected = expected_string_token(src, 0, 4, StringElement::MnemonicEscape(MnemonicEscape::Alarm));
             assert_eq!(&expected, comment);
 
             let src = "\"\\b\"";
-            let tokens = Lexer::new(src).tokenize_all();
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
             let expected = expected_string_token(src, 0, 4, StringElement::MnemonicEscape(MnemonicEscape::Backspace));
             assert_eq!(&expected, comment);
 
             let src = "\"\\n\"";
-            let tokens = Lexer::new(src).tokenize_all();
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
             let expected = expected_string_token(src, 0, 4, StringElement::MnemonicEscape(MnemonicEscape::Newline));
             assert_eq!(&expected, comment);
 
             let src = "\"\\r\"";
-            let tokens = Lexer::new(src).tokenize_all();
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
             let expected = expected_string_token(src, 0, 4, StringElement::MnemonicEscape(MnemonicEscape::Return));
             assert_eq!(&expected, comment);
 
             let src = "\"\\t\"";
-            let tokens = Lexer::new(src).tokenize_all();
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
             let expected = expected_string_token(src, 0, 4, StringElement::MnemonicEscape(MnemonicEscape::Tab));

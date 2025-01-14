@@ -10,6 +10,7 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
+# Internal
 pluine-lex-macros.workspace = true
 
 [lints]

@@ -40,30 +40,30 @@ mod inline_code_point {
 
     #[derive(Debug, PartialEq, Spanned)]
     pub enum InlineCodePointScanError<'src> {
-        /// The provided hex value is too large to fit inside an u32
+        /// Provided hex value is too large to fit inside an u32
         ///
-        /// Inner span points to the entire inline hex.
+        /// Inner span points to the entire inline hex
         OutOfBounds(Span<'src>),
-        /// The provided hex value is not a valid unicode code point
+        /// Provided hex value is not a valid unicode code point
         ///
-        /// Inner span points to the entire inline hex.
+        /// Inner span points to the entire inline hex
         InvalidCodePoint(Span<'src>),
         /// Invalid hexadecimal digit, only 0..=9, a..=f, and A..=F are allowed
         ///
-        /// Inner span points to the invalid character.
+        /// Inner span points to the invalid character
         InvalidHexDigit(Span<'src>),
-        /// Invalid character. Expected semicolon terminator (`;`), or
-        /// hexadecimal digit (0..=9, a..=f, and A..=F)
+        /// Invalid character. expected a digit (0..=9, a..=f, and A..=F) or a semicolon terminator
+        /// (;)
         ///
-        /// Inner span points to the invalid character.
+        /// Inner span points to the invalid character
         InvalidSequenceChar(Span<'src>),
-        /// At least one hex value needs to be provided
+        /// No hexadecimal digit provided, at least is required
         ///
-        /// Inner span points to the entire inline hex.
+        /// Inner span points to the entire inline hex
         MissingDigit(Span<'src>),
-        /// Reached EOF, inline hex value need to be terminated with a semicolon (`;`)
+        /// Reached EOF, inline hex values need to be terminated with a semicolon
         ///
-        /// Inner span points to the entire inline hex.
+        /// Inner span points to the entire inline hex
         EndOfFile(Span<'src>),
     }
 }
