@@ -3,16 +3,11 @@ use alloc::vec::Vec;
 use crate::*;
 
 /// EBNF: `" <StringElement>* "`
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Spanned)]
 pub struct StringLiteral<'src> {
     pub(crate) inner: Vec<StringElement<'src>>,
+    #[span]
     pub(crate) span: Span<'src>,
-}
-
-impl Spanned for StringLiteral<'_> {
-    fn span(&self) -> Span<'_> {
-        self.span
-    }
 }
 
 #[derive(Debug, PartialEq)]

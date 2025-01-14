@@ -34,10 +34,12 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
         Data::Union(data_union) => Err(syn::Error::new(data_union.union_token.span, "union types not supported")),
     };
 
+    let (impl_generics, type_generics, where_clause) = type_definition.generics.split_for_impl();
+
     match self_definition_result {
         Ok(self_definition) => {
             quote! {
-                impl crate::Spanned for #identifier<'_> {
+                impl #impl_generics crate::Spanned for #identifier #type_generics #where_clause {
                     fn span(&self) -> crate::Span<'_> {
                         #self_definition
                     }

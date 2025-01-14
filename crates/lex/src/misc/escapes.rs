@@ -38,7 +38,7 @@ mod inline_code_point {
         }
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Spanned)]
     pub enum InlineCodePointScanError<'src> {
         /// The provided hex value is too large to fit inside an u32
         ///
@@ -65,19 +65,6 @@ mod inline_code_point {
         ///
         /// Inner span points to the entire inline hex.
         EndOfFile(Span<'src>),
-    }
-
-    impl Spanned for InlineCodePointScanError<'_> {
-        fn span(&self) -> Span<'_> {
-            *match self {
-                InlineCodePointScanError::OutOfBounds(span) => span,
-                InlineCodePointScanError::InvalidCodePoint(span) => span,
-                InlineCodePointScanError::InvalidHexDigit(span) => span,
-                InlineCodePointScanError::InvalidSequenceChar(span) => span,
-                InlineCodePointScanError::MissingDigit(span) => span,
-                InlineCodePointScanError::EndOfFile(span) => span,
-            }
-        }
     }
 }
 pub(crate) use inline_code_point::{InlineCodePoint, InlineCodePointScanError};

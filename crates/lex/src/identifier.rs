@@ -2,21 +2,11 @@ mod core {
     use crate::*;
 
     /// Known in some contexts as "Symbol".
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Spanned)]
     pub enum Identifier<'src> {
         Simple(SimpleIdentifier<'src>),
         Vertical(VerticalIdentifier<'src>),
         Peculiar(PeculiarIdentifier<'src>),
-    }
-
-    impl Spanned for Identifier<'_> {
-        fn span(&self) -> Span<'_> {
-            match self {
-                Identifier::Simple(identifier) => identifier.span(),
-                Identifier::Vertical(identifier) => identifier.span(),
-                Identifier::Peculiar(identifier) => identifier.span(),
-            }
-        }
     }
 }
 pub(crate) use core::Identifier;
@@ -51,16 +41,11 @@ mod simple {
     pub struct SimpleSubsequent(char);
 
     /// EBNF: `<SimpleInitial> <SimpleSubsequent>*`
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Spanned)]
     pub struct SimpleIdentifier<'src> {
         inner: &'src str,
+        #[span]
         span: Span<'src>,
-    }
-
-    impl Spanned for SimpleIdentifier<'_> {
-        fn span(&self) -> Span<'_> {
-            self.span
-        }
     }
 }
 pub(crate) use simple::{SimpleIdentifier, SimpleInitial, SimpleSubsequent};
@@ -70,16 +55,11 @@ mod vertical {
 
     use crate::*;
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Spanned)]
     pub struct VerticalIdentifier<'src> {
         inner: Vec<SymbolElement<'src>>,
+        #[span]
         span: Span<'src>,
-    }
-
-    impl Spanned for VerticalIdentifier<'_> {
-        fn span(&self) -> Span<'_> {
-            self.span
-        }
     }
 
     /// EBNF: `<inline hex escape>` | `<mnemonic escape>` | `<any character except '|' or '\'>`
@@ -102,18 +82,13 @@ mod peculiar {
     /// EBNF: `<Sign>`
     /// EBNF: `<Sign> <SignSubsequent> <Subsequent>*`
     /// EBNF `[<Sign>] . <DotSubsequent> <Subsequent>*`
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Spanned)]
     pub struct PeculiarIdentifier<'src> {
         /// Span can't be reused trivially for str
         /// as it includes surrounding quotes
         inner: &'src str,
+        #[span]
         span: Span<'src>,
-    }
-
-    impl Spanned for PeculiarIdentifier<'_> {
-        fn span(&self) -> Span<'_> {
-            self.span
-        }
     }
 
     /// EBNF: `<SimpleInitial> | <Sign> | @`

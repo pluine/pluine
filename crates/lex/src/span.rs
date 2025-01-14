@@ -17,6 +17,12 @@ pub struct Span<'src> {
     src: &'src str,
 }
 
+impl Spanned for Span<'_> {
+    fn span(&self) -> Span<'_> {
+        *self
+    }
+}
+
 impl<'src> Span<'src> {
     /// Create a span from `start` (inclusive) and `end` (exclusive) indexes.
     ///
@@ -71,7 +77,7 @@ mod tests {
         let src = "a".to_string();
         let span = Span::new(&src, 0, 1);
 
-        let spanned = Struct { inner: 0, span };
+        let spanned = GenericStruct { inner: 0, span };
 
         assert_eq!(span, spanned.span())
     }
@@ -95,9 +101,9 @@ mod tests {
     struct TupleStruct<'src>(#[allow(unused)] usize, #[span] super::Span<'src>);
 
     #[derive(SpannedMacro)]
-    struct Struct<'src> {
+    struct GenericStruct<'src, T> {
         #[allow(unused)]
-        inner: usize,
+        inner: T,
         #[span]
         span: super::Span<'src>,
     }
