@@ -1,5 +1,7 @@
 use alloc::vec::Vec;
 
+use thiserror::Error;
+
 use crate::*;
 
 /// EBNF: `" <StringElement>* "`
@@ -39,4 +41,12 @@ pub enum StringEscape {
     Backslash,
     /// EBNF: `\|`
     VerticalLine,
+}
+
+#[derive(Debug, Error)]
+pub enum StringLiteralScanError {
+    #[error("invalid inline code point (inline hex escape)")]
+    InlineHex(#[from] InlineCodePointScanError),
+    #[error("end of file reached, no closing '\"' found")]
+    EndOfFile(Span),
 }

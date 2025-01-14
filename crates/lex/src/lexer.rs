@@ -37,8 +37,7 @@ impl<'src> Lexer<'src> {
                     self.scan_semicolon_comment(start_index);
                 }
                 '"' => {
-                    // TODO:
-                    self.scan_string();
+                    self.scan_string(start_index)?;
                 }
                 // XXX:
                 _ => todo!(),
@@ -60,12 +59,21 @@ impl<'src> Lexer<'src> {
         self.token_buffer.push(comment_token);
     }
 
-    fn scan_string(&mut self) {
+    fn scan_string(&mut self, start_index: usize) -> Result<(), StringLiteralScanError> {
+        let mut string_elements = Vec::new();
+
         loop {
             match self.scanner.next() {
                 Some((char_index, char)) => match char {
                     '"' => {
-                        todo!()
+                        let token = TokenAll::Token(Token::String(StringLiteral {
+                            inner: string_elements,
+                            span: self.scanner.span(start_index, char_index + 1),
+                        }));
+
+                        self.token_buffer.push(token);
+
+                        return Ok(());
                     }
                     '\\' => {
                         match self.scanner.next() {
@@ -99,8 +107,10 @@ impl<'src> Lexer<'src> {
                     }
                     _ => todo!(),
                 },
-                // TODO: handle EOF:
-                None => todo!(),
+                None => {
+                    let eof_span = self.scanner.span_to_end_of_file(start_index);
+                    return Err(StringLiteralScanError::EndOfFile(eof_span));
+                }
             }
         }
     }

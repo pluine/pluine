@@ -8,4 +8,4 @@ mod number;
 pub(crate) use number::*;
 
 mod string;
-pub(crate) use string::*;
+pub(crate) use string::{StringElement, StringEscape, StringLiteral, StringLiteralScanError};
