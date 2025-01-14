@@ -4,7 +4,7 @@ use crate::*;
 
 /// Entrypoint for using `pluine_lex`.
 /// ```
-/// # use crate::*;
+/// # use pluine_lex::Lexer;
 /// let src = "\"abc\"";
 /// let tokens = Lexer::new(src)
 ///     .tokenize_all()
@@ -47,7 +47,7 @@ impl<'src> Lexer<'src> {
         Ok(self.token_buffer)
     }
 
-    /// `;` has already been scanned
+    /// `;` scanned
     fn scan_semicolon_comment(&mut self, start_index: usize) {
         let (end_index, comment_str) = self.scanner.scan_until_line_ending();
 
@@ -59,15 +59,19 @@ impl<'src> Lexer<'src> {
         self.token_buffer.push(comment_token);
     }
 
+    /// `"` scanned
     fn scan_string(&mut self, start_index: usize) -> Result<(), StringLiteralScanError> {
-        let mut string_elements = Vec::new();
+        let mut string_elements = StringElementCollector::new(self.scanner.src());
 
         loop {
             match self.scanner.next() {
                 Some((char_index, char)) => match char {
                     '"' => {
+                        let string_elements = string_elements.finalize(char_index);
+
                         let token = TokenAll::Token(Token::String(StringLiteral {
                             inner: string_elements,
+                            // + 1 to include `"` in span
                             span: self.scanner.span(start_index, char_index + 1),
                         }));
 
@@ -79,33 +83,84 @@ impl<'src> Lexer<'src> {
                         match self.scanner.next() {
                             Some((char_nested_index, char_nested)) => {
                                 match char_nested {
-                                    '"' => todo!(),
-                                    '\\' => todo!(),
-                                    '|' => todo!(),
-                                    // inline hex escape
+                                    '"' => string_elements.push_string_escape(char_index, StringEscape::DoubleQuote),
+                                    '\\' => string_elements.push_string_escape(char_index, StringEscape::Backslash),
+                                    '|' => string_elements.push_string_escape(char_index, StringEscape::VerticalLine),
                                     'x' | 'X' => {
-                                        let inline_hex_result = self.scan_inline_hex(char_nested_index);
+                                        let inline_code_point = self.scan_inline_hex(char_index)?;
+                                        string_elements.push_inline_code_point(char_index, inline_code_point);
                                     }
-                                    // mnemonic escape
-                                    'a' => todo!(),
-                                    'b' => todo!(),
-                                    't' => todo!(),
-                                    'n' => todo!(),
-                                    'r' => todo!(),
-                                    // intraline whitespace
-                                    '\t' | ' ' => todo!(),
+                                    'a' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Alarm),
+                                    'b' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Backspace),
+                                    't' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Tab),
+                                    'n' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Newline),
+                                    'r' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Return),
+                                    '\r' => {
+                                        // \r\n case handled by `maybe_update_line_ending` call in next loop iteration
+                                        string_elements.push_newline_escape(char_index, LineEnding::Return, Vec::new());
+                                    }
+                                    '\n' => {
+                                        string_elements.push_newline_escape(char_index, LineEnding::Newline, Vec::new());
+                                    }
+                                    ' ' => {
+                                        let mut leading_whitespace = alloc::vec![IntralineWhitespace::Space];
+
+                                        loop {
+                                            match self.scanner.next() {
+                                                Some((newline_escape_char_index, newline_escape_char)) => match newline_escape_char {
+                                                    ' ' => leading_whitespace.push(IntralineWhitespace::Space),
+                                                    '\t' => leading_whitespace.push(IntralineWhitespace::Tab),
+                                                    '\r' => {
+                                                        string_elements.push_newline_escape(
+                                                            char_index,
+                                                            LineEnding::Return,
+                                                            leading_whitespace,
+                                                        );
+                                                        break;
+                                                    }
+                                                    '\n' => {
+                                                        string_elements.push_newline_escape(
+                                                            char_index,
+                                                            LineEnding::Newline,
+                                                            leading_whitespace,
+                                                        );
+                                                        break;
+                                                    }
+                                                    _ => {
+                                                        let span = self.scanner.span_char(newline_escape_char_index);
+                                                        return Err(StringLiteralScanError::UnknownWhitespace(span));
+                                                    }
+                                                },
+                                                None => {
+                                                    let eof_span = self.scanner.span_to_end_of_file(start_index);
+                                                    return Err(StringLiteralScanError::EndOfFile(eof_span));
+                                                }
+                                            }
+                                        }
+                                    }
+                                    '\t' => {
+                                        // same as ' ', but where first char is Tab
+                                        todo!()
+                                    }
                                     _ => {
-                                        // TODO: error
-                                        todo!();
+                                        // + 1 to include the unknown escape character
+                                        let span = self.scanner.span(char_index, char_nested_index + 1);
+                                        return Err(StringLiteralScanError::UnknownEscape(span));
                                     }
                                 }
-                                todo!()
                             }
-                            // TODO: handle EOF:
-                            None => todo!(),
+                            None => {
+                                let eof_span = self.scanner.span_to_end_of_file(start_index);
+                                return Err(StringLiteralScanError::EndOfFile(eof_span));
+                            }
                         }
                     }
-                    _ => todo!(),
+                    '\n' => {
+                        string_elements.maybe_update_line_ending(char_index);
+                    }
+                    _ => {
+                        string_elements.maybe_begin_chars(char_index);
+                    }
                 },
                 None => {
                     let eof_span = self.scanner.span_to_end_of_file(start_index);
@@ -315,8 +370,17 @@ mod tests {
         use super::*;
 
         fn expected_string_token<'src>(src: &'src str, start: usize, end: usize, element: StringElement<'src>) -> TokenAll<'src> {
+            expected_string_tokens(src, start, end, [element])
+        }
+
+        fn expected_string_tokens<'src>(
+            src: &'src str,
+            start: usize,
+            end: usize,
+            elements: impl IntoIterator<Item = StringElement<'src>>,
+        ) -> TokenAll<'src> {
             TokenAll::Token(Token::String(StringLiteral {
-                inner: alloc::vec![element],
+                inner: elements.into_iter().collect(),
                 span: Span::new(src, start, end),
             }))
         }
@@ -327,37 +391,52 @@ mod tests {
             let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
-            let expected = expected_string_token(src, 0, 5, StringElement::Other("abc"));
+            let expected = expected_string_token(src, 0, 5, StringElement::Chars("abc"));
+            assert_eq!(&expected, comment);
+        }
+
+        #[test]
+        fn mixed_string_elements() {
+            let src = "\"abc\\x64;e\"";
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
+
+            let comment = &tokens[0];
+            let string_elements = [
+                StringElement::Chars("abc"),
+                StringElement::InlineCodePoint(InlineCodePoint('d', Span::new(src, 4, 9))),
+                StringElement::Chars("e"),
+            ];
+            let expected = expected_string_tokens(src, 0, 11, string_elements);
             assert_eq!(&expected, comment);
         }
 
         #[test]
         fn backslash_escape() {
-            let src = "\"\\\"";
+            let src = r#""\\""#;
             let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
-            let expected = expected_string_token(src, 0, 3, StringElement::StringEscape(StringEscape::Backslash));
+            let expected = expected_string_token(src, 0, 4, StringElement::StringEscape(StringEscape::Backslash));
             assert_eq!(&expected, comment);
         }
 
         #[test]
         fn vertical_line_escape() {
-            let src = "\"|\"";
+            let src = r#""\|""#;
             let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
-            let expected = expected_string_token(src, 0, 3, StringElement::StringEscape(StringEscape::VerticalLine));
+            let expected = expected_string_token(src, 0, 4, StringElement::StringEscape(StringEscape::VerticalLine));
             assert_eq!(&expected, comment);
         }
 
         #[test]
         fn double_quote_escape() {
-            let src = "\"\"\"";
+            let src = r#""\"""#;
             let tokens = Lexer::new(src).tokenize_all().unwrap();
 
             let comment = &tokens[0];
-            let expected = expected_string_token(src, 0, 3, StringElement::StringEscape(StringEscape::DoubleQuote));
+            let expected = expected_string_token(src, 0, 4, StringElement::StringEscape(StringEscape::DoubleQuote));
             assert_eq!(&expected, comment);
         }
 
@@ -401,44 +480,140 @@ mod tests {
 
         #[test]
         fn inline_hex_escape() {
-            // both upper and lowercase
-            // assert span range and contents
-            todo!()
+            // lower x
+            let src = "\"\\x61;\"";
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
+
+            let comment = &tokens[0];
+            let inlined_code_point = InlineCodePoint('a', Span::new(src, 1, 6));
+            let expected = expected_string_token(src, 0, 7, StringElement::InlineCodePoint(inlined_code_point));
+            assert_eq!(&expected, comment);
+
+            // upper X
+            let src = "\"\\X61;\"";
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
+
+            let comment = &tokens[0];
+            let inlined_code_point = InlineCodePoint('a', Span::new(src, 1, 6));
+            let expected = expected_string_token(src, 0, 7, StringElement::InlineCodePoint(inlined_code_point));
+            assert_eq!(&expected, comment);
         }
 
         #[test]
         fn unclosed_eof_error() {
-            todo!()
+            // at first char
+            let src = r#"""#;
+            let actual_error = Lexer::new(src).tokenize_all().unwrap_err();
+
+            let expected_span = Span::new(src, 0, 1);
+            let expected_error = TokenizeError::String(StringLiteralScanError::EndOfFile(expected_span));
+            assert_eq!(expected_error, actual_error);
+
+            // at subsequent chars
+            let src = r#""abc"#;
+            let actual_error = Lexer::new(src).tokenize_all().unwrap_err();
+
+            let expected_span = Span::new(src, 0, 4);
+            let expected_error = TokenizeError::String(StringLiteralScanError::EndOfFile(expected_span));
+            assert_eq!(expected_error, actual_error);
         }
 
         #[test]
-        fn newline_escape_with_line_ending() {
-            todo!()
+        fn newline_escape() {
+            // keeps leading and trailing whitespace
+            // TODO: supports both \t and ' ' as first and subsequent chars
+            let src = "\"abc  \\ \t\n  def\"";
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
+            let comment = &tokens[0];
+            let expected = expected_string_tokens(
+                src,
+                0,
+                16,
+                [
+                    StringElement::Chars("abc  "),
+                    StringElement::NewlineEscape(StringNewlineEscape {
+                        line_ending: LineEnding::Newline,
+                        leading_whitespace: alloc::vec![IntralineWhitespace::Space, IntralineWhitespace::Tab],
+                    }),
+                    StringElement::Chars("  def"),
+                ],
+            );
+            assert_eq!(&expected, comment);
+
+            // without leading whitespace
+            // TODO: test \r and \r\n return too
+            let src = "\"a\\\nb\"";
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
+            let comment = &tokens[0];
+            let expected = expected_string_tokens(
+                src,
+                0,
+                6,
+                [
+                    StringElement::Chars("a"),
+                    StringElement::NewlineEscape(StringNewlineEscape {
+                        // TODO: test \r and \r\n return too
+                        line_ending: LineEnding::Newline,
+                        leading_whitespace: Default::default(),
+                    }),
+                    StringElement::Chars("b"),
+                ],
+            );
+            assert_eq!(&expected, comment);
         }
 
+        // Make sure that the newline isn't simply checked for a possible
+        // CRLF of a newline escape and then discarded if not.
         #[test]
-        fn newline_escape_without_line_ending() {
-            todo!()
+        fn newline_as_first_char() {
+            let src = "\"\n\"";
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
+
+            let comment = &tokens[0];
+            let expected = expected_string_token(src, 0, 3, StringElement::Chars("\n"));
+            assert_eq!(&expected, comment);
         }
 
         #[test]
         fn newline_escape_eof_error() {
-            todo!()
+            let src = r#""\ "#;
+            let actual_error = Lexer::new(src).tokenize_all().unwrap_err();
+
+            let expected_span = Span::new(src, 0, 3);
+            let expected_error = TokenizeError::String(StringLiteralScanError::EndOfFile(expected_span));
+            assert_eq!(expected_error, actual_error);
         }
 
         #[test]
-        fn newline_escaped_newline_error() {
-            todo!()
+        fn newline_escape_unknown_whitespace_error() {
+            let src = r#""\ a""#;
+            let actual_error = Lexer::new(src).tokenize_all().unwrap_err();
+
+            let expected_span = Span::new(src, 3, 4);
+            let expected_error = TokenizeError::String(StringLiteralScanError::UnknownWhitespace(expected_span));
+            assert_eq!(expected_error, actual_error);
         }
 
         #[test]
-        fn newline_non_newline_error() {
-            todo!()
+        fn newline_escape_without_line_ending_error() {
+            // prematurely closing is an error when following the specs grammar
+            // (newline isn't optional)
+            let src = "\"\\ \"";
+            let actual_error = Lexer::new(src).tokenize_all().unwrap_err();
+
+            let expected_span = Span::new(src, 3, 4);
+            let expected_error = TokenizeError::String(StringLiteralScanError::UnknownWhitespace(expected_span));
+            assert_eq!(expected_error, actual_error);
         }
 
         #[test]
         fn unknown_escape_error() {
-            todo!()
+            let src = r#""\y""#;
+            let actual_error = Lexer::new(src).tokenize_all().unwrap_err();
+
+            let expected_span = Span::new(src, 1, 3);
+            let expected_error = TokenizeError::String(StringLiteralScanError::UnknownEscape(expected_span));
+            assert_eq!(expected_error, actual_error);
         }
     }
 }

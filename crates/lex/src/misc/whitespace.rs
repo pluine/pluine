@@ -1,4 +1,5 @@
 /// EBNF: <Space> | <Tab>
+#[derive(Debug, PartialEq)]
 pub enum IntralineWhitespace {
     Space,
     Tab,
@@ -6,15 +7,15 @@ pub enum IntralineWhitespace {
 
 #[derive(Debug, PartialEq)]
 pub enum LineEnding {
-    /// LF
+    /// LF (\r)
     ///
     /// EBNF: `<return>`
     Return,
-    /// LF
+    /// LF (\n)
     ///
     /// EBNF: `<newline>`
     Newline,
-    /// CRLF
+    /// CRLF (\r\n)
     ///
     /// EBNF: `<return> <newline>`
     ReturnNewline,

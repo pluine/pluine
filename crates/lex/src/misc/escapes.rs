@@ -22,7 +22,7 @@ mod inline_code_point {
 
     /// EBNF: `\ x <HexadecimalDigit>+ ;` | \ X <HexadecimalDigit>+ ;`
     #[derive(Debug, PartialEq)]
-    pub struct InlineCodePoint(char, Span);
+    pub struct InlineCodePoint(pub(crate) char, pub(crate) Span);
 
     impl InlineCodePoint {
         pub(crate) const TERIMINATOR: char = ';';

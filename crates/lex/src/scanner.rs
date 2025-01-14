@@ -20,6 +20,11 @@ impl<'src> Scanner<'src> {
         Self { src, char_iter: src.char_indices() }
     }
 
+    /// Returns the inner source code string stored by the scanner
+    pub fn src(&self) -> &'src str {
+        self.src
+    }
+
     /// Shorthand for calling [`Self::next`] and omitting the returned index
     pub fn next_char(&mut self) -> Option<char> {
         self.next().map(|(_, char)| char)
