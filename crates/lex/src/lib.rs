@@ -55,7 +55,7 @@ pub(crate) use pluine_lex_macros::Spanned;
 pub(crate) use span::{Span, Spanned};
 
 mod lexer;
-pub(crate) use lexer::Lexer;
+pub use lexer::Lexer;
 
 mod scanner;
 pub(crate) use scanner::Scanner;
@@ -63,23 +63,7 @@ pub(crate) use scanner::Scanner;
 mod token;
 pub(crate) use token::{Token, TokenAll, TokenChar};
 
-mod error {
-    use crate::*;
-
-    /// Error returned by [`Lexer::tokenize_all`]
-    // NOTE: thiserror currently not being used because it requires inner errors
-    // to be `dyn Error + 'static`. No `'src` lifetime allowed that is.
-    #[derive(Debug)]
-    pub enum TokenizeError<'src> {
-        String(TokenizeStringError<'src>),
-    }
-
-    #[derive(Debug)]
-    pub enum TokenizeStringError<'src> {
-        /// invalid inline code point (inline hex escape)
-        InlineHex(InlineCodePointScanError<'src>),
-    }
-}
+mod error;
 pub(crate) use error::TokenizeError;
 
 mod comment;

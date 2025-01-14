@@ -2,12 +2,21 @@ use alloc::vec::Vec;
 
 use crate::*;
 
+/// Entrypoint for using `pluine_lex`.
+/// ```
+/// # use crate::*;
+/// let src = "\"abc\"";
+/// let tokens = Lexer::new(src)
+///     .tokenize_all()
+///     .expect("valid source code string");
+/// ```
 pub struct Lexer<'src> {
     scanner: Scanner<'src>,
     token_buffer: Vec<TokenAll<'src>>,
 }
 
 impl<'src> Lexer<'src> {
+    /// Construct a new `Lexer`.
     pub fn new(src: &'src str) -> Self {
         Self { scanner: Scanner::new(src), token_buffer: Vec::new() }
     }
