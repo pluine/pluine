@@ -1,5 +1,5 @@
 error: union types not supported
  --> tests/ui/not_supported_unions.rs
   |
-  | union Foo<'src> {
+  | union Foo {
   | ^^^^^

@@ -7,12 +7,12 @@ use crate::*;
 pub struct StringLiteral<'src> {
     pub(crate) inner: Vec<StringElement<'src>>,
     #[span]
-    pub(crate) span: Span<'src>,
+    pub(crate) span: Span,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum StringElement<'src> {
-    InlineCodePoint(InlineCodePoint<'src>),
+    InlineCodePoint(InlineCodePoint),
     NewlineEscape(LineEnding),
     MnemonicEscape(MnemonicEscape),
     StringEscape(StringEscape),

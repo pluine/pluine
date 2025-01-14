@@ -20,13 +20,13 @@ mod inline_code_point {
 
     /// EBNF: `\ x <HexadecimalDigit>+ ;` | \ X <HexadecimalDigit>+ ;`
     #[derive(Debug, PartialEq)]
-    pub struct InlineCodePoint<'src>(char, Span<'src>);
+    pub struct InlineCodePoint(char, Span);
 
-    impl<'src> InlineCodePoint<'src> {
+    impl InlineCodePoint {
         pub(crate) const TERIMINATOR: char = ';';
 
         /// Span should point to the entire range from `\x` to the terminator `;` included.
-        pub(crate) fn new(span: Span<'src>, code_point: u32) -> Result<Self, InlineCodePointScanError<'src>> {
+        pub(crate) fn new(span: Span, code_point: u32) -> Result<Self, InlineCodePointScanError> {
             match char::from_u32(code_point) {
                 Some(inner_char) => Ok(Self(inner_char, span)),
                 None => Err(InlineCodePointScanError::InvalidCodePoint(span)),
@@ -39,32 +39,32 @@ mod inline_code_point {
     }
 
     #[derive(Debug, PartialEq, Spanned)]
-    pub enum InlineCodePointScanError<'src> {
+    pub enum InlineCodePointScanError {
         /// Provided hex value is too large to fit inside an u32
         ///
         /// Inner span points to the entire inline hex
-        OutOfBounds(Span<'src>),
+        OutOfBounds(Span),
         /// Provided hex value is not a valid unicode code point
         ///
         /// Inner span points to the entire inline hex
-        InvalidCodePoint(Span<'src>),
+        InvalidCodePoint(Span),
         /// Invalid hexadecimal digit, only 0..=9, a..=f, and A..=F are allowed
         ///
         /// Inner span points to the invalid character
-        InvalidHexDigit(Span<'src>),
+        InvalidHexDigit(Span),
         /// Invalid character. expected a digit (0..=9, a..=f, and A..=F) or a semicolon terminator
         /// (;)
         ///
         /// Inner span points to the invalid character
-        InvalidSequenceChar(Span<'src>),
+        InvalidSequenceChar(Span),
         /// No hexadecimal digit provided, at least is required
         ///
         /// Inner span points to the entire inline hex
-        MissingDigit(Span<'src>),
+        MissingDigit(Span),
         /// Reached EOF, inline hex values need to be terminated with a semicolon
         ///
         /// Inner span points to the entire inline hex
-        EndOfFile(Span<'src>),
+        EndOfFile(Span),
     }
 }
 pub(crate) use inline_code_point::{InlineCodePoint, InlineCodePointScanError};

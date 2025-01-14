@@ -3,18 +3,18 @@ use crate::*;
 #[derive(Debug, PartialEq)]
 pub enum Token<'src> {
     Identifier(Identifier<'src>),
-    Boolean(Boolean<'src>),
-    Number(NumberLiteral<'src>),
-    Character(CharacterLiteral<'src>),
+    Boolean(Boolean),
+    Number(NumberLiteral),
+    Character(CharacterLiteral),
     String(StringLiteral<'src>),
-    Other(TokenChar<'src>),
+    Other(TokenChar),
 }
 
 #[derive(Debug, PartialEq, Spanned)]
-pub struct TokenChar<'src> {
+pub struct TokenChar {
     inner: TokenCharVariant,
     #[span]
-    span: Span<'src>,
+    span: Span,
 }
 
 #[derive(Debug, PartialEq)]

@@ -1,17 +1,17 @@
 use crate::*;
 
 #[derive(Debug, PartialEq, Spanned)]
-pub enum NumberLiteral<'src> {
-    Binary(Number<'src, BinaryDigit>),
-    Octal(Number<'src, OctalDigit>),
-    Decimal(Number<'src, DecimalDigit>),
-    Hexadecimal(Number<'src, HexadecimalDigit>),
+pub enum NumberLiteral {
+    Binary(Number<BinaryDigit>),
+    Octal(Number<OctalDigit>),
+    Decimal(Number<DecimalDigit>),
+    Hexadecimal(Number<HexadecimalDigit>),
 }
 
 #[derive(Debug, PartialEq, Spanned)]
-pub struct Number<'src, R: Radix> {
+pub struct Number<R: Radix> {
     prefix: Prefix<R>,
     inner: ComplexNumber<R>,
     #[span]
-    span: Span<'src>,
+    span: Span,
 }

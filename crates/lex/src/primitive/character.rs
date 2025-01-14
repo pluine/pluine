@@ -2,10 +2,10 @@ mod character {
     use crate::*;
 
     #[derive(Debug, PartialEq, Spanned)]
-    pub enum CharacterLiteral<'src> {
-        Simple(CharacterSimple<'src>),
-        CodePoint(CharacterCodePoint<'src>),
-        Name(CharacterName<'src>),
+    pub enum CharacterLiteral {
+        Simple(CharacterSimple),
+        CodePoint(CharacterCodePoint),
+        Name(CharacterName),
     }
 }
 pub(crate) use character::CharacterLiteral;
@@ -15,10 +15,10 @@ mod literal {
 
     /// EBNF-ish: `#\<any char>`
     #[derive(Debug, PartialEq, Spanned)]
-    pub struct CharacterSimple<'src> {
+    pub struct CharacterSimple {
         inner: char,
         #[span]
-        span: Span<'src>,
+        span: Span,
     }
 }
 pub(crate) use literal::CharacterSimple;
@@ -30,10 +30,10 @@ mod code_point {
     ///
     /// EBNF: `#\x <HexadecimalDigit>+ | #\X <HexadecimalDigit>+`
     #[derive(Debug, PartialEq, Spanned)]
-    pub struct CharacterCodePoint<'src> {
+    pub struct CharacterCodePoint {
         inner: char,
         #[span]
-        span: Span<'src>,
+        span: Span,
     }
 }
 pub(crate) use code_point::CharacterCodePoint;
@@ -64,10 +64,10 @@ mod name {
     }
 
     #[derive(Debug, PartialEq, Spanned)]
-    pub struct CharacterName<'src> {
+    pub struct CharacterName {
         inner: CharacterNameVariant,
         #[span]
-        span: Span<'src>,
+        span: Span,
     }
 }
 pub(crate) use name::{CharacterName, CharacterNameVariant};

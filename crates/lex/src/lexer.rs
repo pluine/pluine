@@ -28,7 +28,7 @@ impl<'src> Lexer<'src> {
     // NOTE: Avoid using recursion here. Tail call optimization can't be guaranteed by the rust
     // compiler, and the `tailcall` crate does not perform well for mutual recursion. Makes it also
     // hard to reason about potential origins of UTF-8 sequence boundary errors.
-    pub fn tokenize_all(mut self) -> Result<Vec<TokenAll<'src>>, TokenizeError<'src>> {
+    pub fn tokenize_all(mut self) -> Result<Vec<TokenAll<'src>>, TokenizeError> {
         while let Some((start_index, char)) = self.scanner.next() {
             match char {
                 // Atmosphere Whitespace

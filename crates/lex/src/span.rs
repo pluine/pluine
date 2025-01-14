@@ -3,38 +3,39 @@
 /// Implemented on types containing a [`Span`]
 pub trait Spanned: crate::private::Sealed {
     /// Retrieve the span for a type
-    fn span(&self) -> Span<'_>;
+    fn span(&self) -> Span;
 }
 
 /// Span pointing to a range within the source storing both start (inclusive)
 /// and end (exclusive) indexes in order to later provide diagnostics feedback.
+//
+// Storing the source string slice or using some some trick like `PhantomData<&'src
+// ()>` to later avoid reading the span on another source string was not deemed worth it.
+// `thiserror` for one does not allow inner error not not be anything than `'static`.
 #[derive(Debug, PartialEq, Copy, Clone)]
-pub struct Span<'src> {
+pub struct Span {
     start: usize,
     end: usize,
-    /// Storing the source string slice over some trick like `PhantomData<&'src
-    /// ()>` to later avoid reading the span on another source string.
-    src: &'src str,
 }
 
-impl Spanned for Span<'_> {
-    fn span(&self) -> Span<'_> {
+impl Spanned for Span {
+    fn span(&self) -> Span {
         *self
     }
 }
 
-crate::private::impl_sealed_marker!(Span<'_>);
+crate::private::impl_sealed_marker!(Span);
 
-impl<'src> Span<'src> {
+impl Span {
     /// Create a span from `start` (inclusive) and `end` (exclusive) indexes.
     ///
     /// Panics in non-optimized builds if start is greater than end, and end not
     /// within the bounds of str.
-    pub(crate) fn new(src: &'src str, start: usize, end: usize) -> Self {
+    pub(crate) fn new(src: &str, start: usize, end: usize) -> Self {
         debug_assert!(start < end);
         debug_assert!(end <= src.len());
 
-        Span { start, end, src }
+        Span { start, end }
     }
 }
 
@@ -97,22 +98,22 @@ mod tests {
     }
 
     #[derive(SpannedMacro)]
-    struct NewtypeStruct<'src>(super::Span<'src>);
+    struct NewtypeStruct(super::Span);
 
     #[derive(SpannedMacro)]
-    struct TupleStruct<'src>(#[allow(unused)] usize, #[span] super::Span<'src>);
+    struct TupleStruct(#[allow(unused)] usize, #[span] super::Span);
 
     #[derive(SpannedMacro)]
-    struct GenericStruct<'src, T> {
+    struct GenericStruct<T> {
         #[allow(unused)]
         inner: T,
         #[span]
-        span: super::Span<'src>,
+        span: super::Span,
     }
 
     #[derive(SpannedMacro)]
-    enum Enum<'src> {
-        A(NewtypeStruct<'src>),
-        B(TupleStruct<'src>),
+    enum Enum {
+        A(NewtypeStruct),
+        B(TupleStruct),
     }
 }

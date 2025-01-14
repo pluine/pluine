@@ -9,14 +9,14 @@ pub enum Comment<'src> {
     /// String does not include the leading semi-colon, nor the line ending.
     Semicolon(SemicolonComment<'src>),
     Nested(NestedComment<'src>),
-    Section(SectionComment<'src>),
+    Section(SectionComment),
 }
 
 #[derive(Debug, PartialEq, Spanned)]
 pub struct SemicolonComment<'src> {
     pub(crate) inner: &'src str,
     #[span]
-    pub(crate) span: Span<'src>,
+    pub(crate) span: Span,
 }
 
 /// EBNF: `#| <NestedCommentText> <NestedComment>* <NestedCommentText> |#`
@@ -26,7 +26,7 @@ pub struct NestedComment<'src> {
     nested_comment: Vec<NestedComment<'src>>,
     trailing_text: NestedCommentText<'src>,
     #[span]
-    span: Span<'src>,
+    span: Span,
 }
 
 /// EBNF-ish: `<all characters except CommentOpen and CommentClose>`
@@ -42,4 +42,4 @@ pub struct NestedCommentText<'src>(&'src str);
 /// only the `#;` is registered. The rest is instead placed in separate token
 /// stream elements. Span points to only the `#;` comment token.
 #[derive(Debug, PartialEq, Spanned)]
-pub struct SectionComment<'src>(Span<'src>);
+pub struct SectionComment(Span);

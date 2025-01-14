@@ -40,7 +40,7 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
         Ok(self_definition) => {
             quote! {
                 impl #impl_generics crate::Spanned for #identifier #type_generics #where_clause {
-                    fn span(&self) -> crate::Span<'_> {
+                    fn span(&self) -> crate::Span {
                         #self_definition
                     }
                 }

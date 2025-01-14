@@ -26,17 +26,17 @@ impl<'src> Scanner<'src> {
     }
 
     /// See [`Span::new`]
-    pub fn span(&self, start: usize, end: usize) -> Span<'src> {
+    pub fn span(&self, start: usize, end: usize) -> Span {
         Span::new(self.src, start, end)
     }
 
     /// Span from `start` to `source.len()`
-    pub fn span_to_end_of_file(&self, start: usize) -> Span<'_> {
+    pub fn span_to_end_of_file(&self, start: usize) -> Span {
         Span::new(self.src, start, self.src.len())
     }
 
     /// Span from `start` to `start + 1`
-    pub fn span_char(&self, start: usize) -> Span<'_> {
+    pub fn span_char(&self, start: usize) -> Span {
         Span::new(self.src, start, start + 1)
     }
 

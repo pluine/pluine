@@ -1,5 +1,5 @@
 error: missing field annotated with #[span]
  --> tests/ui/missing_span_attribute_tuple_struct.rs
   |
-  | struct Foo<'src>(Span<'src>, usize);
-  |                 ^^^^^^^^^^^^^^^^^^^
+  | struct Foo(Span, usize);
+  |           ^^^^^^^^^^^^^

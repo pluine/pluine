@@ -1,11 +1,11 @@
 use pluine_lex::span::Span;
 
 #[derive(pluine_lex_macros::Spanned)]
-struct Foo<'src> {
+struct Foo {
     #[span]
-    a: Span<'src>,
+    a: Span,
     #[span]
-    b: Span<'src>,
+    b: Span,
 }
 
 fn main() {}

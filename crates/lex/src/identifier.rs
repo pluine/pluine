@@ -45,7 +45,7 @@ mod simple {
     pub struct SimpleIdentifier<'src> {
         inner: &'src str,
         #[span]
-        span: Span<'src>,
+        span: Span,
     }
 }
 pub(crate) use simple::{SimpleIdentifier, SimpleInitial, SimpleSubsequent};
@@ -59,7 +59,7 @@ mod vertical {
     pub struct VerticalIdentifier<'src> {
         inner: Vec<SymbolElement<'src>>,
         #[span]
-        span: Span<'src>,
+        span: Span,
     }
 
     /// EBNF: `<inline hex escape>` | `<mnemonic escape>` | `<any character except '|' or '\'>`
@@ -67,7 +67,7 @@ mod vertical {
     #[derive(Debug, PartialEq)]
     pub enum SymbolElement<'src> {
         MnemonicEscape(MnemonicEscape),
-        InlineCodePoint(InlineCodePoint<'src>),
+        InlineCodePoint(InlineCodePoint),
         Str(&'src str),
     }
 
@@ -88,7 +88,7 @@ mod peculiar {
         /// as it includes surrounding quotes
         inner: &'src str,
         #[span]
-        span: Span<'src>,
+        span: Span,
     }
 
     /// EBNF: `<SimpleInitial> | <Sign> | @`
