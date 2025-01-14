@@ -44,6 +44,8 @@ fn derive_mock_impl(token_stream: TokenStream) -> TokenStream {
                         #self_definition
                     }
                 }
+
+                impl #impl_generics crate::private::Sealed for #identifier #type_generics #where_clause {}
             }
         }
         Err(err) => err.to_compile_error(),

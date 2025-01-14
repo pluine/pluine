@@ -5,7 +5,7 @@ pub trait Radix: core::fmt::Debug + PartialEq + private::Sealed {
     type Number: core::fmt::Debug + PartialEq;
 }
 
-private::impl_sealed_marker!(Radix, BinaryDigit, OctalDigit, DecimalDigit, HexadecimalDigit);
+private::impl_sealed_marker!(BinaryDigit, OctalDigit, DecimalDigit, HexadecimalDigit);
 
 impl Radix for DecimalDigit {
     type Number = Decimal;

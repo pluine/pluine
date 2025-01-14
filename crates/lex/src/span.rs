@@ -1,7 +1,7 @@
 //! Types referencing source code spans.
 
 /// Implemented on types containing a [`Span`]
-pub trait Spanned {
+pub trait Spanned: crate::private::Sealed {
     /// Retrieve the span for a type
     fn span(&self) -> Span<'_>;
 }
@@ -22,6 +22,8 @@ impl Spanned for Span<'_> {
         *self
     }
 }
+
+crate::private::impl_sealed_marker!(Span<'_>);
 
 impl<'src> Span<'src> {
     /// Create a span from `start` (inclusive) and `end` (exclusive) indexes.
