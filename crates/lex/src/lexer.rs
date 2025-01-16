@@ -64,107 +64,94 @@ impl<'src> Lexer<'src> {
         let mut string_elements = StringElementCollector::new(self.scanner.src());
 
         loop {
-            match self.scanner.next() {
-                Some((char_index, char)) => match char {
-                    '"' => {
-                        let string_elements = string_elements.finalize(char_index);
+            let Some((char_index, char)) = self.scanner.next() else {
+                let eof_span = self.scanner.span_to_end_of_file(start_index);
+                return Err(StringLiteralScanError::EndOfFile(eof_span));
+            };
 
-                        let token = TokenAll::Token(Token::String(StringLiteral {
-                            inner: string_elements,
-                            // + 1 to include `"` in span
-                            span: self.scanner.span(start_index, char_index + 1),
-                        }));
+            match char {
+                '"' => {
+                    let string_elements = string_elements.finalize(char_index);
 
-                        self.token_buffer.push(token);
+                    let token = TokenAll::Token(Token::String(StringLiteral {
+                        inner: string_elements,
+                        // + 1 to include `"` in span
+                        span: self.scanner.span(start_index, char_index + 1),
+                    }));
 
-                        return Ok(());
-                    }
-                    '\\' => {
-                        match self.scanner.next() {
-                            Some((char_nested_index, char_nested)) => {
-                                match char_nested {
-                                    '"' => string_elements.push_string_escape(char_index, StringEscape::DoubleQuote),
-                                    '\\' => string_elements.push_string_escape(char_index, StringEscape::Backslash),
-                                    '|' => string_elements.push_string_escape(char_index, StringEscape::VerticalLine),
-                                    'x' | 'X' => {
-                                        let inline_code_point = self.scan_inline_hex(char_index)?;
-                                        string_elements.push_inline_code_point(char_index, inline_code_point);
-                                    }
-                                    'a' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Alarm),
-                                    'b' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Backspace),
-                                    't' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Tab),
-                                    'n' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Newline),
-                                    'r' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Return),
+                    self.token_buffer.push(token);
+
+                    return Ok(());
+                }
+                '\\' => {
+                    let Some((char_nested_index, char_nested)) = self.scanner.next() else {
+                        let eof_span = self.scanner.span_to_end_of_file(start_index);
+                        return Err(StringLiteralScanError::EndOfFile(eof_span));
+                    };
+
+                    match char_nested {
+                        '"' => string_elements.push_string_escape(char_index, StringEscape::DoubleQuote),
+                        '\\' => string_elements.push_string_escape(char_index, StringEscape::Backslash),
+                        '|' => string_elements.push_string_escape(char_index, StringEscape::VerticalLine),
+                        'x' | 'X' => {
+                            let inline_code_point = self.scan_inline_hex(char_index)?;
+                            string_elements.push_inline_code_point(char_index, inline_code_point);
+                        }
+                        'a' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Alarm),
+                        'b' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Backspace),
+                        't' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Tab),
+                        'n' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Newline),
+                        'r' => string_elements.push_mnemonic_escape(char_index, MnemonicEscape::Return),
+                        '\r' => {
+                            // \r\n case handled by `maybe_update_line_ending` call in next loop iteration
+                            string_elements.push_newline_escape(char_index, LineEnding::Return, Vec::new());
+                        }
+                        '\n' => {
+                            string_elements.push_newline_escape(char_index, LineEnding::Newline, Vec::new());
+                        }
+                        ' ' => {
+                            let mut leading_whitespace = alloc::vec![IntralineWhitespace::Space];
+
+                            loop {
+                                let Some((newline_escape_char_index, newline_escape_char)) = self.scanner.next() else {
+                                    let eof_span = self.scanner.span_to_end_of_file(start_index);
+                                    return Err(StringLiteralScanError::EndOfFile(eof_span));
+                                };
+
+                                match newline_escape_char {
+                                    ' ' => leading_whitespace.push(IntralineWhitespace::Space),
+                                    '\t' => leading_whitespace.push(IntralineWhitespace::Tab),
                                     '\r' => {
-                                        // \r\n case handled by `maybe_update_line_ending` call in next loop iteration
-                                        string_elements.push_newline_escape(char_index, LineEnding::Return, Vec::new());
+                                        string_elements.push_newline_escape(char_index, LineEnding::Return, leading_whitespace);
+                                        break;
                                     }
                                     '\n' => {
-                                        string_elements.push_newline_escape(char_index, LineEnding::Newline, Vec::new());
-                                    }
-                                    ' ' => {
-                                        let mut leading_whitespace = alloc::vec![IntralineWhitespace::Space];
-
-                                        loop {
-                                            match self.scanner.next() {
-                                                Some((newline_escape_char_index, newline_escape_char)) => match newline_escape_char {
-                                                    ' ' => leading_whitespace.push(IntralineWhitespace::Space),
-                                                    '\t' => leading_whitespace.push(IntralineWhitespace::Tab),
-                                                    '\r' => {
-                                                        string_elements.push_newline_escape(
-                                                            char_index,
-                                                            LineEnding::Return,
-                                                            leading_whitespace,
-                                                        );
-                                                        break;
-                                                    }
-                                                    '\n' => {
-                                                        string_elements.push_newline_escape(
-                                                            char_index,
-                                                            LineEnding::Newline,
-                                                            leading_whitespace,
-                                                        );
-                                                        break;
-                                                    }
-                                                    _ => {
-                                                        let span = self.scanner.span_char(newline_escape_char_index);
-                                                        return Err(StringLiteralScanError::UnknownWhitespace(span));
-                                                    }
-                                                },
-                                                None => {
-                                                    let eof_span = self.scanner.span_to_end_of_file(start_index);
-                                                    return Err(StringLiteralScanError::EndOfFile(eof_span));
-                                                }
-                                            }
-                                        }
-                                    }
-                                    '\t' => {
-                                        // same as ' ', but where first char is Tab
-                                        todo!()
+                                        string_elements.push_newline_escape(char_index, LineEnding::Newline, leading_whitespace);
+                                        break;
                                     }
                                     _ => {
-                                        // + 1 to include the unknown escape character
-                                        let span = self.scanner.span(char_index, char_nested_index + 1);
-                                        return Err(StringLiteralScanError::UnknownEscape(span));
+                                        let span = self.scanner.span_char(newline_escape_char_index);
+                                        return Err(StringLiteralScanError::UnknownWhitespace(span));
                                     }
                                 }
                             }
-                            None => {
-                                let eof_span = self.scanner.span_to_end_of_file(start_index);
-                                return Err(StringLiteralScanError::EndOfFile(eof_span));
-                            }
+                        }
+                        '\t' => {
+                            // same as ' ', but where first char is Tab
+                            todo!()
+                        }
+                        _ => {
+                            // + 1 to include the unknown escape character
+                            let span = self.scanner.span(char_index, char_nested_index + 1);
+                            return Err(StringLiteralScanError::UnknownEscape(span));
                         }
                     }
-                    '\n' => {
-                        string_elements.maybe_update_line_ending(char_index);
-                    }
-                    _ => {
-                        string_elements.maybe_begin_chars(char_index);
-                    }
-                },
-                None => {
-                    let eof_span = self.scanner.span_to_end_of_file(start_index);
-                    return Err(StringLiteralScanError::EndOfFile(eof_span));
+                }
+                '\n' => {
+                    string_elements.maybe_update_line_ending(char_index);
+                }
+                _ => {
+                    string_elements.maybe_begin_chars(char_index);
                 }
             }
         }
@@ -174,58 +161,46 @@ impl<'src> Lexer<'src> {
     ///
     /// `start_index` points to the `\` in `\x<HexDigit>+`
     fn scan_inline_hex(&mut self, start_index: usize) -> Result<InlineCodePoint, InlineCodePointScanError> {
-        match self.scanner.next() {
-            Some((char_index, char)) => {
-                if char == InlineCodePoint::TERIMINATOR {
-                    let span = self.scanner.span(start_index, char_index + 1);
-                    return Err(InlineCodePointScanError::MissingDigit(span));
-                }
+        let Some((char_index, char)) = self.scanner.next() else {
+            let span = self.scanner.span_to_end_of_file(start_index);
+            return Err(InlineCodePointScanError::EndOfFile(span));
+        };
 
-                match char.to_digit(HexadecimalDigit::RADIX) {
-                    Some(hex_value) => {
-                        let mut current_code_point = hex_value;
-                        loop {
-                            match self.scanner.next() {
-                                Some((next_char_index, next_char)) => {
-                                    if next_char == InlineCodePoint::TERIMINATOR {
-                                        let span = self.scanner.span(start_index, next_char_index + 1);
-                                        return InlineCodePoint::new(span, current_code_point);
-                                    }
+        if char == InlineCodePoint::TERIMINATOR {
+            let span = self.scanner.span(start_index, char_index + 1);
+            return Err(InlineCodePointScanError::MissingDigit(span));
+        }
 
-                                    match next_char.to_digit(HexadecimalDigit::RADIX) {
-                                        Some(next_code_point) => {
-                                            let Some(shifted_prev_code_point) = current_code_point.checked_mul(HexadecimalDigit::RADIX)
-                                            else {
-                                                let span = self.scanner.span(start_index, next_char_index + 1);
-                                                return Err(InlineCodePointScanError::OutOfBounds(span));
-                                            };
+        let Some(hex_value) = char.to_digit(HexadecimalDigit::RADIX) else {
+            let span = self.scanner.span_char(char_index);
+            return Err(InlineCodePointScanError::InvalidHexDigit(span));
+        };
 
-                                            // Within bounds guaranteed by `checked_mul`.
-                                            current_code_point = shifted_prev_code_point + next_code_point;
-                                        }
-                                        None => {
-                                            let span = self.scanner.span_char(next_char_index);
-                                            return Err(InlineCodePointScanError::InvalidSequenceChar(span));
-                                        }
-                                    }
-                                }
-                                None => {
-                                    let span = self.scanner.span_to_end_of_file(start_index);
-                                    return Err(InlineCodePointScanError::EndOfFile(span));
-                                }
-                            }
-                        }
-                    }
-                    None => {
-                        let span = self.scanner.span_char(char_index);
-                        Err(InlineCodePointScanError::InvalidHexDigit(span))
-                    }
-                }
-            }
-            None => {
+        let mut current_code_point = hex_value;
+
+        loop {
+            let Some((next_char_index, next_char)) = self.scanner.next() else {
                 let span = self.scanner.span_to_end_of_file(start_index);
-                Err(InlineCodePointScanError::EndOfFile(span))
+                return Err(InlineCodePointScanError::EndOfFile(span));
+            };
+
+            if next_char == InlineCodePoint::TERIMINATOR {
+                let span = self.scanner.span(start_index, next_char_index + 1);
+                return InlineCodePoint::new(span, current_code_point);
             }
+
+            let Some(next_code_point) = next_char.to_digit(HexadecimalDigit::RADIX) else {
+                let span = self.scanner.span_char(next_char_index);
+                return Err(InlineCodePointScanError::InvalidSequenceChar(span));
+            };
+
+            let Some(shifted_prev_code_point) = current_code_point.checked_mul(HexadecimalDigit::RADIX) else {
+                let span = self.scanner.span(start_index, next_char_index + 1);
+                return Err(InlineCodePointScanError::OutOfBounds(span));
+            };
+
+            // Within bounds guaranteed by `checked_mul`.
+            current_code_point = shifted_prev_code_point + next_code_point;
         }
     }
 }

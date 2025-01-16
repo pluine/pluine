@@ -62,17 +62,13 @@ impl<'src> Scanner<'src> {
                 }
 
                 loop {
-                    match self.next() {
-                        Some((current_index, current_char)) => {
-                            if LineEnding::is_line_ending(current_char) {
-                                return (current_index, &self.src[start..current_index]);
-                            }
-                        }
-                        // Reached EOF
-                        None => {
-                            let eof_index = self.char_iter.offset();
-                            return (eof_index, &self.src[start..eof_index]);
-                        }
+                    let Some((current_index, current_char)) = self.next() else {
+                        let eof_index = self.char_iter.offset();
+                        return (eof_index, &self.src[start..eof_index]);
+                    };
+
+                    if LineEnding::is_line_ending(current_char) {
+                        return (current_index, &self.src[start..current_index]);
                     }
                 }
             }
