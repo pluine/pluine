@@ -110,36 +110,9 @@ impl<'src> Lexer<'src> {
                             string_elements.push_newline_escape(char_index, LineEnding::Newline, Vec::new());
                         }
                         ' ' => {
-                            let mut leading_whitespace = alloc::vec![IntralineWhitespace::Space];
-
-                            loop {
-                                let Some((newline_escape_char_index, newline_escape_char)) = self.scanner.next() else {
-                                    let eof_span = self.scanner.span_to_end_of_file(start_index);
-                                    return Err(StringLiteralScanError::EndOfFile(eof_span));
-                                };
-
-                                match newline_escape_char {
-                                    ' ' => leading_whitespace.push(IntralineWhitespace::Space),
-                                    '\t' => leading_whitespace.push(IntralineWhitespace::Tab),
-                                    '\r' => {
-                                        string_elements.push_newline_escape(char_index, LineEnding::Return, leading_whitespace);
-                                        break;
-                                    }
-                                    '\n' => {
-                                        string_elements.push_newline_escape(char_index, LineEnding::Newline, leading_whitespace);
-                                        break;
-                                    }
-                                    _ => {
-                                        let span = self.scanner.span_char(newline_escape_char_index);
-                                        return Err(StringLiteralScanError::UnknownWhitespace(span));
-                                    }
-                                }
-                            }
+                            self.scan_string_newline_escape(start_index, char_index, &mut string_elements, IntralineWhitespace::Space)?
                         }
-                        '\t' => {
-                            // same as ' ', but where first char is Tab
-                            todo!()
-                        }
+                        '\t' => self.scan_string_newline_escape(start_index, char_index, &mut string_elements, IntralineWhitespace::Tab)?,
                         _ => {
                             // + 1 to include the unknown escape character
                             let span = self.scanner.span(char_index, char_nested_index + 1);
@@ -155,6 +128,42 @@ impl<'src> Lexer<'src> {
                 }
             }
         }
+    }
+
+    fn scan_string_newline_escape(
+        &mut self,
+        string_start_index: usize,
+        backslash_index: usize,
+        string_elements: &mut StringElementCollector,
+        first_whitespace_char: IntralineWhitespace,
+    ) -> Result<(), StringLiteralScanError> {
+        let mut leading_whitespace = alloc::vec![first_whitespace_char];
+
+        loop {
+            let Some((newline_escape_char_index, newline_escape_char)) = self.scanner.next() else {
+                let eof_span = self.scanner.span_to_end_of_file(string_start_index);
+                return Err(StringLiteralScanError::EndOfFile(eof_span));
+            };
+
+            match newline_escape_char {
+                ' ' => leading_whitespace.push(IntralineWhitespace::Space),
+                '\t' => leading_whitespace.push(IntralineWhitespace::Tab),
+                '\r' => {
+                    string_elements.push_newline_escape(backslash_index, LineEnding::Return, leading_whitespace);
+                    break;
+                }
+                '\n' => {
+                    string_elements.push_newline_escape(backslash_index, LineEnding::Newline, leading_whitespace);
+                    break;
+                }
+                _ => {
+                    let span = self.scanner.span_char(newline_escape_char_index);
+                    return Err(StringLiteralScanError::UnknownWhitespace(span));
+                }
+            }
+        }
+
+        Ok(())
     }
 
     /// `\x` or `\X` have already been scanned
@@ -496,7 +505,8 @@ mod tests {
         #[test]
         fn newline_escape() {
             // keeps leading and trailing whitespace
-            // TODO: supports both \t and ' ' as first and subsequent chars
+
+            // supports both \t and ' ' as first and subsequent chars
             let src = "\"abc  \\ \t\n  def\"";
             let tokens = Lexer::new(src).tokenize_all().unwrap();
             let comment = &tokens[0];
@@ -509,6 +519,25 @@ mod tests {
                     StringElement::NewlineEscape(StringNewlineEscape {
                         line_ending: LineEnding::Newline,
                         leading_whitespace: alloc::vec![IntralineWhitespace::Space, IntralineWhitespace::Tab],
+                    }),
+                    StringElement::Chars("  def"),
+                ],
+            );
+            assert_eq!(&expected, comment);
+
+            // supports both \t and ' ' as first and subsequent chars
+            let src = "\"abc  \\ \t\n  def\"";
+            let tokens = Lexer::new(src).tokenize_all().unwrap();
+            let comment = &tokens[0];
+            let expected = expected_string_tokens(
+                src,
+                0,
+                16,
+                [
+                    StringElement::Chars("abc  "),
+                    StringElement::NewlineEscape(StringNewlineEscape {
+                        line_ending: LineEnding::Newline,
+                        leading_whitespace: alloc::vec![IntralineWhitespace::Tab, IntralineWhitespace::Space],
                     }),
                     StringElement::Chars("  def"),
                 ],
